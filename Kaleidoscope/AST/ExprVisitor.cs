@@ -61,5 +61,24 @@
         {
             return node;
         }
+
+        protected internal virtual ExprAST VisitIfExprAST(IfExpAST node)
+        {
+            this.Visit(node.Condition);
+            this.Visit(node.Then);
+            this.Visit(node.Else);
+
+            return node;
+        }
+
+        protected internal virtual ExprAST VisitForExprAST(ForExprAST node)
+        {
+            this.Visit(node.Start);
+            this.Visit(node.End);
+            this.Visit(node.Step);
+            this.Visit(node.Body);
+
+            return node;
+        }
     }
 }

@@ -10,6 +10,8 @@
         VariableExpr,
         PrototypeExpr,
         FunctionExpr,
-        NumberExpr
+        NumberExpr,
+        IfExpr,
+        ForExpr,
     }
 }
