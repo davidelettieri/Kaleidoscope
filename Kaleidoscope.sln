@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kaleidoscope", "Kaleidoscope\Kaleidoscope.csproj", "{94357F1A-70A2-4746-95AB-9ECE8F179DAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kaleidoscope", "Kaleidoscope\Kaleidoscope.csproj", "{94357F1A-70A2-4746-95AB-9ECE8F179DAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kaleidoscope.Demo", "Kaleidoscope.Demo\Kaleidoscope.Demo.csproj", "{7112434F-980C-4EB0-81C7-0670F9770F84}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{94357F1A-70A2-4746-95AB-9ECE8F179DAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{94357F1A-70A2-4746-95AB-9ECE8F179DAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{94357F1A-70A2-4746-95AB-9ECE8F179DAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7112434F-980C-4EB0-81C7-0670F9770F84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7112434F-980C-4EB0-81C7-0670F9770F84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7112434F-980C-4EB0-81C7-0670F9770F84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7112434F-980C-4EB0-81C7-0670F9770F84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
