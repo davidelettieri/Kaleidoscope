@@ -61,12 +61,12 @@ namespace Kaleidoscope
             _module = LLVM.ModuleCreateWithName("Kaleidoscope Module");
             _builder = LLVM.CreateBuilder();
             _passManager = LLVM.CreateFunctionPassManagerForModule(_module);
-            LLVM.AddBasicAliasAnalysisPass(_passManager);
-            LLVM.AddPromoteMemoryToRegisterPass(_passManager);
-            LLVM.AddInstructionCombiningPass(_passManager);
-            LLVM.AddReassociatePass(_passManager);
-            LLVM.AddGVNPass(_passManager);
-            LLVM.AddCFGSimplificationPass(_passManager);
+            //LLVM.AddBasicAliasAnalysisPass(_passManager);
+            //LLVM.AddPromoteMemoryToRegisterPass(_passManager);
+            //LLVM.AddInstructionCombiningPass(_passManager);
+            //LLVM.AddReassociatePass(_passManager);
+            //LLVM.AddGVNPass(_passManager);
+            //LLVM.AddCFGSimplificationPass(_passManager);
             LLVM.InitializeFunctionPassManager(_passManager);
 
             LLVM.CreateExecutionEngineForModule(out _engine, _module, out var error);
@@ -182,7 +182,6 @@ namespace Kaleidoscope
             var phi = LLVM.BuildPhi(_builder, LLVM.DoubleType(), "iftmp");
             LLVM.AddIncoming(phi, new[] { then_val }, new[] { then_bb }, 1u);
             LLVM.AddIncoming(phi, new[] { else_val }, new[] { else_bb }, 1u);
-            LLVM.PositionBuilderAtEnd(_builder, startBB);
             LLVM.PositionBuilderAtEnd(_builder, then_bb);
             LLVM.BuildBr(_builder, merge_bb);
             LLVM.PositionBuilderAtEnd(_builder, else_bb);
