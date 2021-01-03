@@ -19,48 +19,24 @@
         STAR,
         MINUS,
         PLUS,
-        LESS_THAN
+        LESS_THAN,
+        SEMICOLON
     }
 
-    public interface IToken
-    {
-        TokenType Type { get; }
-    }
-
-    public class Token : IToken
+    public class Token
     {
         public TokenType Type { get; }
         public int Start { get; }
         public int Length { get; }
         public int Line { get; }
+        public object Value { get; }
 
-        public Token(TokenType type, int start, int length, int line)
+        public Token(TokenType type, int start, int length, int line, object value = null)
         {
             Type = type;
             Start = start;
             Length = length;
             Line = line;
-        }
-    }
-
-    public class NumberToken : Token
-    {
-        public double Value { get; }
-
-        public NumberToken(double value, int start, int length, int line) 
-            : base(TokenType.NUMBER, start, length, line)
-        {
-            Value = value;
-        }
-    }
-
-    public class IdentifierToken : Token
-    {
-        public string Value { get; }
-
-        public IdentifierToken(string value, int start, int length, int line)
-             : base(TokenType.IDENTIFIER, start, length, line)
-        {
             Value = value;
         }
     }

@@ -24,9 +24,9 @@
 
         public override ExprType NodeType { get; protected set; }
 
-        protected internal override ExprAST Accept(ExprVisitor visitor)
+        public override TResult Accept<TResult, TContext>(ExprVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitForExprAST(this);
+            return visitor.VisitForExprAST(ctx, this);
         }
     }
 }

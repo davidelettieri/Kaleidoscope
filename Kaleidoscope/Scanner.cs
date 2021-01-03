@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Text;
 using static Kaleidoscope.TokenType;
 
 namespace Kaleidoscope
@@ -13,8 +10,7 @@ namespace Kaleidoscope
         private int _start;
         private int _current;
         private int _line = 1;
-        private readonly List<IToken> _tokens = new List<IToken>();
-        private readonly StringBuilder _builder = new StringBuilder();
+        private readonly List<Token> _tokens = new List<Token>();
         private readonly Dictionary<string, TokenType> _keywords = new Dictionary<string, TokenType>()
         {
             { "def", DEF },
@@ -26,14 +22,12 @@ namespace Kaleidoscope
             { "in", IN },
         };
 
-
-
         public Scanner(string source)
         {
             _source = source;
         }
 
-        public List<IToken> ScanTokens()
+        public List<Token> ScanTokens()
         {
             while (!IsAtEnd())
             {
@@ -76,6 +70,12 @@ namespace Kaleidoscope
                 case ')':
                     AddToken(RIGHT_PAREN);
                     break;
+                case ',':
+                    AddToken(COMMA);
+                    break;
+                case ';':
+                    AddToken(SEMICOLON);
+                    break;
                 case '#':
                     while (!IsAtEnd() && Peek() != '\n' && Peek() != '\r')
                     {
@@ -106,13 +106,13 @@ namespace Kaleidoscope
                 while (IsDigit(Peek())) Advance();
             }
 
-            AddNumberToken(double.Parse(_source.Substring(_start, _current - _start), CultureInfo.InvariantCulture));
+            AddNumberToken(double.Parse(_source[_start.._current], CultureInfo.InvariantCulture));
         }
 
         private void Identifier()
         {
             while (char.IsLetterOrDigit(Peek())) Advance();
-            var identifier = _source.Substring(_start, _current - _start);
+            var identifier = _source[_start.._current];
 
             if (_keywords.TryGetValue(identifier, out var value))
             {
@@ -171,8 +171,8 @@ namespace Kaleidoscope
         private bool IsDigit(char c) => char.IsDigit(c);
 
         void AddToken(TokenType type) => _tokens.Add(new Token(type, _start, _current - _start, _line));
-        void AddIdentifierToken(string value) => _tokens.Add(new IdentifierToken(value, _start, _current - _start, _line));
-        void AddNumberToken(double value) => _tokens.Add(new NumberToken(value, _start, _current - _start, _line));
+        void AddIdentifierToken(string value) => _tokens.Add(new Token(IDENTIFIER, _start, _current - _start, _line, value));
+        void AddNumberToken(double value) => _tokens.Add(new Token(NUMBER, _start, _current - _start, _line, value));
         private bool IsAtEnd() => _current >= _source.Length;
     }
 }

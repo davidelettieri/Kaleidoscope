@@ -4,39 +4,39 @@
 
     public sealed class BinaryExprAST : ExprAST
     {
-        public BinaryExprAST(char op, ExprAST lhs, ExprAST rhs)
+        public BinaryExprAST(TokenType op, ExprAST lhs, ExprAST rhs)
         {
             switch (op)
             {
-                case '+':
-                    this.NodeType = ExprType.AddExpr;
+                case TokenType.PLUS:
+                    NodeType = ExprType.AddExpr;
                     break;
-                case '-':
-                    this.NodeType = ExprType.SubtractExpr;
+                case TokenType.MINUS:
+                    NodeType = ExprType.SubtractExpr;
                     break;
-                case '*':
-                    this.NodeType = ExprType.MultiplyExpr;
+                case TokenType.STAR:
+                    NodeType = ExprType.MultiplyExpr;
                     break;
-                case '<':
-                    this.NodeType = ExprType.LessThanExpr;
+                case TokenType.LESS_THAN:
+                    NodeType = ExprType.LessThanExpr;
                     break;
                 default:
                     throw new ArgumentException("op " + op + " is not a valid operator");
             }
 
-            this.Lhs = lhs;
-            this.Rhs = rhs;
+            Lhs = lhs;
+            Rhs = rhs;
         }
 
-        public ExprAST Lhs { get; private set; }
+        public ExprAST Lhs { get; }
 
-        public ExprAST Rhs { get; private set; }
+        public ExprAST Rhs { get; }
 
         public override ExprType NodeType { get; protected set; }
 
-        protected internal override ExprAST Accept(ExprVisitor visitor)
+        public override TResult Accept<TResult, TContext>(ExprVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitBinaryExprAST(this);
+            return visitor.VisitBinaryExprAST(ctx, this);
         }
     }
 }
