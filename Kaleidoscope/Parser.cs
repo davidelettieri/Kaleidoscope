@@ -112,7 +112,23 @@ namespace Kaleidoscope
                 return new NumberExprAST((double)Previous().Value);
             }
 
+            if (Match(IF))
+            {
+                return If();
+            }
+
             throw Error(Peek(), "Expect expression.");
+        }
+
+        private ExprAST If()
+        {
+            var cond = Expression();
+            Consume(THEN, "Expected 'then'");
+            var @then = Expression();
+            Consume(ELSE, "Expected 'else'");
+            var @else = Expression();
+
+            return new IfExpAST(cond, @then, @else);
         }
 
         private ExprAST Call(string name)
