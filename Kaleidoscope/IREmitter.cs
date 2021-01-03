@@ -156,25 +156,18 @@ namespace Kaleidoscope
             var _cond = expr.Condition;
             var _then = expr.Then;
             var _else = expr.Else;
-
             var (_, cond) = Visit(ctx, _cond);
-
             var zero = LLVM.ConstReal(LLVM.DoubleType(), 0);
             var cond_val = LLVM.BuildFCmp(_builder, LLVMRealPredicate.LLVMRealONE, cond, zero, "ifcond");
-
             var startBB = LLVM.GetInsertBlock(_builder);
             var the_function = LLVM.GetBasicBlockParent(startBB);
-
             var then_bb = LLVM.AppendBasicBlock(the_function, "then");
             var else_bb = LLVM.AppendBasicBlock(the_function, "else");
             var merge_bb = LLVM.AppendBasicBlock(the_function, "ifcont");
             LLVM.BuildCondBr(_builder, cond_val, then_bb, else_bb);
             LLVM.PositionBuilderAtEnd(_builder, then_bb);
             var (_, then_val) = Visit(ctx, _then);
-
             then_bb = LLVM.GetInsertBlock(_builder);
-
-
             LLVM.PositionBuilderAtEnd(_builder, else_bb);
             var (_, else_val) = Visit(ctx, _else);
             else_bb = LLVM.GetInsertBlock(_builder);
