@@ -6,6 +6,7 @@ using System.Text;
 using Kaleidoscope.AST;
 using LLVMSharp;
 using static Kaleidoscope.AST.ExprType;
+using System.Runtime.InteropServices;
 
 namespace Kaleidoscope
 {
@@ -56,17 +57,26 @@ namespace Kaleidoscope
         private readonly LLVMBuilderRef _builder;
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMExecutionEngineRef _engine;
+
+        [DllImport("Extern\\bindings.o", EntryPoint = "putchard")]
+        static extern void putchard(double d);
+
         public IREmitter()
         {
+            putchard(1.0);
             _module = LLVM.ModuleCreateWithName("Kaleidoscope Module");
             _builder = LLVM.CreateBuilder();
+            LLVM.LinkInMCJIT();
+            LLVM.InitializeAArch64Target();
+            LLVM.InitializeAArch64Target();
+            LLVM.InitializeAArch64TargetMC();
             _passManager = LLVM.CreateFunctionPassManagerForModule(_module);
-            //LLVM.AddBasicAliasAnalysisPass(_passManager);
-            //LLVM.AddPromoteMemoryToRegisterPass(_passManager);
-            //LLVM.AddInstructionCombiningPass(_passManager);
-            //LLVM.AddReassociatePass(_passManager);
-            //LLVM.AddGVNPass(_passManager);
-            //LLVM.AddCFGSimplificationPass(_passManager);
+            LLVM.AddBasicAliasAnalysisPass(_passManager);
+            LLVM.AddPromoteMemoryToRegisterPass(_passManager);
+            LLVM.AddInstructionCombiningPass(_passManager);
+            LLVM.AddReassociatePass(_passManager);
+            LLVM.AddGVNPass(_passManager);
+            LLVM.AddCFGSimplificationPass(_passManager);
             LLVM.InitializeFunctionPassManager(_passManager);
 
             LLVM.CreateExecutionEngineForModule(out _engine, _module, out var error);

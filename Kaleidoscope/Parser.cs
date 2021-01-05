@@ -117,7 +117,32 @@ namespace Kaleidoscope
                 return If();
             }
 
+            if (Match(FOR))
+            {
+                return For();
+            }
+
             throw Error(Peek(), "Expect expression.");
+        }
+
+        private ExprAST For()
+        {
+            var id = Identifier();
+            Consume(EQUAL, "Expect '=' after identifier");
+            var start = Expression();
+            Consume(COMMA, "Expect ',' after initial value");
+            var end = Expression();
+            ExprAST step = null;
+            if (Check(COMMA))
+            {
+                Consume(COMMA, "");
+                step = Expression();
+            }
+
+            Consume(IN, "Expect 'in' after for definition");
+            var body = Expression();
+
+            return new ForExprAST(id, start, end, step, body);
         }
 
         private ExprAST If()
