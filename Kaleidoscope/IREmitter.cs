@@ -51,7 +51,7 @@ namespace Kaleidoscope
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public delegate double Print(double d);
+    public delegate void Print(double d);
 
     public class IREmitter : ExprVisitor<(Context, LLVMValueRef), Context>
     {
@@ -60,16 +60,14 @@ namespace Kaleidoscope
         private readonly LLVMPassManagerRef _passManager;
         private readonly LLVMExecutionEngineRef _engine;
 
-        private double Printd(double x)
+        private void Printd(double x)
         {
             try
             {
-                Console.WriteLine(x);
-                return 0.0F;
+                Console.WriteLine("> {0}", x);
             }
             catch
             {
-                return 0.0;
             }
         }
 
@@ -91,22 +89,16 @@ namespace Kaleidoscope
             LLVM.AddGVNPass(_passManager);
             LLVM.AddCFGSimplificationPass(_passManager);
             LLVM.InitializeFunctionPassManager(_passManager);
-             LLVM.CreateExecutionEngineForModule(out _engine, _module, out var error);
-            // var options = new LLVMMCJITCompilerOptions { NoFramePointerElim = 1 };
-            // LLVM.InitializeMCJITCompilerOptions(options);
-            // LLVM.CreateMCJITCompilerForModule(out _engine, _module, options, out var error);
-            // if (!string.IsNullOrWhiteSpace(error))
-            //     Console.WriteLine($"Error: {error}");
+            LLVM.CreateExecutionEngineForModule(out _engine, _module, out var error);
+            if (!string.IsNullOrWhiteSpace(error))
+                throw new Exception(error);
 
-            var ft = LLVM.FunctionType(LLVM.DoubleType(), new[] { LLVM.DoubleType() }, false);
-            var write = LLVM.AddFunction(_module, "write", ft);
+            var ft = LLVM.FunctionType(LLVM.VoidType(), new[] { LLVM.DoubleType() }, false);
+            var write = LLVM.AddFunction(_module, "print", ft);
             LLVM.SetLinkage(write, LLVMLinkage.LLVMExternalLinkage);
             Delegate d = new Print(Printd);
             var p = Marshal.GetFunctionPointerForDelegate(d);
             LLVM.AddGlobalMapping(_engine, write, p);
-            if (!string.IsNullOrWhiteSpace(error))
-                throw new Exception(error);
-            LLVM.DumpModule(_module);
         }
 
         public void Intepret(List<ExprAST> exprs)
@@ -116,7 +108,6 @@ namespace Kaleidoscope
             {
                 var (ctxn, v) = Visit(ctx, item);
                 LLVM.DumpValue(v);
-                // LLVM.DumpModule(_module);
                 Console.WriteLine();
                 if (item is FunctionAST f && string.IsNullOrWhiteSpace(f.Proto.Name))
                 {
@@ -172,7 +163,32 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitForExprAST(Context ctx, ForExprAST expr)
         {
-            throw new NotImplementedException();
+            var var_name = expr.VarName;
+            var start = expr.Start;
+            var end_ = expr.End;
+            var step = expr.Step;
+            var body = expr.Body;
+            var (ctx1,start_val) = Visit(ctx,start);
+            var preheader_bb = LLVM.GetInsertBlock(_builder);
+            var the_function = LLVM.GetBasicBlockParent(preheader_bb);
+            var loop_bb = LLVM.AppendBasicBlock(the_function, "loop");
+            LLVM.BuildBr(_builder,loop_bb);
+            LLVM.PositionBuilderAtEnd(_builder,loop_bb);
+            var variable = LLVM.BuildPhi(_builder, LLVM.DoubleType(), var_name);
+            LLVM.AddIncoming(variable, new[] {start_val}, new[] { preheader_bb},1u);
+            var ctx2 = ctx1.Add(var_name, variable);
+            Visit(ctx2, body);
+            var (ctx3,step_val) = step is not null ? Visit(ctx2, step) : (ctx2,LLVM.ConstReal(LLVM.DoubleType(), 1));
+            var next_var = LLVM.BuildFAdd(_builder, variable, step_val, "nextvar");
+            var (ctx4,end_cond) = Visit(ctx3, end_);
+            var zero = LLVM.ConstReal(LLVM.DoubleType(), 0);
+            var end_cond2 = LLVM.BuildFCmp(_builder, LLVMRealPredicate.LLVMRealONE, end_cond, zero, "loopcond");
+            var loop_end_bb = LLVM.GetInsertBlock(_builder);
+            var after_bb = LLVM.AppendBasicBlock(the_function,"afterloop");
+            LLVM.BuildCondBr(_builder, end_cond2, loop_bb, after_bb);
+            LLVM.PositionBuilderAtEnd(_builder,after_bb);
+            LLVM.AddIncoming(variable, new[] {next_var}, new[] {loop_end_bb}, 1u);
+            return (ctx, zero);
         }
 
         public (Context, LLVMValueRef) VisitFunctionAST(Context ctx, FunctionAST expr)
@@ -242,7 +258,8 @@ namespace Kaleidoscope
             }
             else
             {
-                var ft = LLVM.FunctionType(LLVM.DoubleType(), doubles, false);
+                var retType = expr.Name == "write" ? LLVM.VoidType() : LLVM.DoubleType();
+                var ft = LLVM.FunctionType(retType, doubles, false);
                 f = LLVM.AddFunction(_module, name, ft);
                 LLVM.SetLinkage(f, LLVMLinkage.LLVMExternalLinkage);
             }
