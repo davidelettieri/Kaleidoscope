@@ -7,17 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Extern\bindings.o" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Extern\bindings.o">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <PackageReference Include="LLVMSharp" Version="11.0.0-beta" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="LLVMSharp" Version="5.0.0" />
-  </ItemGroup>
-
 </Project>
