@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Kaleidoscope.AST;
 using LLVMSharp.Interop;
-// using LLVMSharp.Interop;
 using static Kaleidoscope.AST.ExprType;
 
 namespace Kaleidoscope
@@ -54,12 +53,13 @@ namespace Kaleidoscope
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Print(double d);
 
-    public class IREmitter : ExprVisitor<(Context, LLVMValueRef), Context>
+    public class Interpreter : ExprVisitor<(Context, LLVMValueRef), Context>
     {
-        private readonly LLVMModuleRef _module;
-        private readonly LLVMBuilderRef _builder;
-        private readonly LLVMPassManagerRef _passManager;
-        private readonly LLVMExecutionEngineRef _engine;
+        private LLVMModuleRef _module;
+        private LLVMBuilderRef _builder;
+        private LLVMPassManagerRef _passManager;
+        private LLVMExecutionEngineRef _engine;
+        private readonly Dictionary<string, ExprAST> _functions;
 
         private void Printd(double x)
         {
@@ -72,7 +72,7 @@ namespace Kaleidoscope
             }
         }
 
-        public IREmitter()
+        public Interpreter()
         {
             LLVM.LinkInMCJIT();
             LLVM.InitializeX86TargetMC();
@@ -80,9 +80,20 @@ namespace Kaleidoscope
             LLVM.InitializeX86TargetInfo();
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
+            _functions = new Dictionary<string, ExprAST>();
+
+            // var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, new[] { LLVMTypeRef.Double }, false);
+            // var write = _module.AddFunction("print", ft);
+            // write.Linkage = LLVMLinkage.LLVMExternalLinkage;
+            // Delegate d = new Print(Printd);
+            // var p = Marshal.GetFunctionPointerForDelegate(d);
+            // _engine.AddGlobalMapping(write, p);
+        }
+
+        private void InitializeModule()
+        {
             _module = LLVMModuleRef.CreateWithName("Kaleidoscope Module");
             _builder = _module.Context.CreateBuilder();
-            _module.CreateMCJITCompiler();
             _passManager = _module.CreateFunctionPassManager();
             _passManager.AddBasicAliasAnalysisPass();
             _passManager.AddPromoteMemoryToRegisterPass();
@@ -91,23 +102,16 @@ namespace Kaleidoscope
             _passManager.AddGVNPass();
             _passManager.AddCFGSimplificationPass();
             _passManager.InitializeFunctionPassManager();
-            _engine = _module.CreateExecutionEngine();
-            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, new[] { LLVMTypeRef.Double }, false);
-            var write = _module.AddFunction("print", ft);
-            write.Linkage = LLVMLinkage.LLVMExternalLinkage;
-            Delegate d = new Print(Printd);
-            var p = Marshal.GetFunctionPointerForDelegate(d);
-            _engine.AddGlobalMapping(write, p);
+            _engine = _module.CreateMCJITCompiler();
         }
 
-        public void Intepret(List<ExprAST> exprs)
+        public void Run(List<ExprAST> exprs)
         {
+            InitializeModule();
             var ctx = new Context();
             foreach (var item in exprs)
             {
                 var (ctxn, v) = Visit(ctx, item);
-                _module.Dump();
-                Console.WriteLine();
                 if (item is FunctionAST f && string.IsNullOrWhiteSpace(f.Proto.Name))
                 {
                     var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());
@@ -116,6 +120,9 @@ namespace Kaleidoscope
                 }
                 ctx = ctxn;
             }
+            _passManager.Dispose();
+            _builder.Dispose();
+            _module.Dispose();
         }
 
         private (Context, LLVMValueRef) Visit(Context ctx, ExprAST body)
@@ -150,8 +157,24 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitCallExprAST(Context ctx, CallExprAST expr)
         {
-            var valueRef = _module.LastGlobal;
             var func = _module.GetNamedFunction(expr.Callee);
+
+            if (func.Handle == IntPtr.Zero)
+            {
+                if (_functions.TryGetValue(expr.Callee, out var oldExpr))
+                {
+                    var pos = _builder.InsertBlock;
+                    var (ctx1, f) = Visit(ctx, oldExpr);
+                    ctx = ctx1;
+                    func = f;
+                    _builder.PositionAtEnd(pos);
+                }
+                else
+                {
+                    return (ctx, null);
+                }
+            }
+
             var funcParams = func.Params;
             if (expr.Arguments.Count != funcParams.Length)
                 throw new InvalidOperationException("incorrect number of arguments passed");
@@ -192,12 +215,14 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitFunctionAST(Context ctx, FunctionAST expr)
         {
+            if (!string.IsNullOrWhiteSpace(expr.Proto.Name))
+                _functions[expr.Proto.Name] = expr;
+
             var (ctxn, tf) = Visit(ctx, expr.Proto);
             var bb = tf.AppendBasicBlock("entry");
             _builder.PositionAtEnd(bb);
             var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
             _builder.BuildRet(returnVal);
-            _module.Verify(LLVMVerifierFailureAction.LLVMPrintMessageAction);
             _passManager.RunFunctionPassManager(tf);
             return (ctxn2, tf);
         }
