@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Kaleidoscope.AST;
 using LLVMSharp.Interop;
-using static Kaleidoscope.AST.ExprType;
+using static Kaleidoscope.AST.ExpressionType;
 
 namespace Kaleidoscope
 {
@@ -53,13 +53,13 @@ namespace Kaleidoscope
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Print(double d);
 
-    public class Interpreter : ExprVisitor<(Context, LLVMValueRef), Context>
+    public class Interpreter : ExpressionVisitor<(Context, LLVMValueRef), Context>
     {
         private LLVMModuleRef _module;
         private LLVMBuilderRef _builder;
         private LLVMPassManagerRef _passManager;
         private LLVMExecutionEngineRef _engine;
-        private readonly Dictionary<string, ExprAST> _functions;
+        private readonly Dictionary<string, Expression> _functions;
 
         private void Printd(double x)
         {
@@ -80,7 +80,7 @@ namespace Kaleidoscope
             LLVM.InitializeX86TargetInfo();
             LLVM.InitializeX86AsmParser();
             LLVM.InitializeX86AsmPrinter();
-            _functions = new Dictionary<string, ExprAST>();
+            _functions = new Dictionary<string, Expression>();
 
             // var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, new[] { LLVMTypeRef.Double }, false);
             // var write = _module.AddFunction("print", ft);
@@ -105,14 +105,14 @@ namespace Kaleidoscope
             _engine = _module.CreateMCJITCompiler();
         }
 
-        public void Run(List<ExprAST> exprs)
+        public void Run(List<Expression> exprs)
         {
             InitializeModule();
             var ctx = new Context();
             foreach (var item in exprs)
             {
                 var (ctxn, v) = Visit(ctx, item);
-                if (item is FunctionAST f && string.IsNullOrWhiteSpace(f.Proto.Name))
+                if (item is FunctionExpression f && string.IsNullOrWhiteSpace(f.Proto.Name))
                 {
                     var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());
                     var fres = LLVMTypeRef.Double.GenericValueToFloat(res);
@@ -125,22 +125,22 @@ namespace Kaleidoscope
             _module.Dispose();
         }
 
-        private (Context, LLVMValueRef) Visit(Context ctx, ExprAST body)
+        private (Context, LLVMValueRef) Visit(Context ctx, Expression body)
         {
             return body.Accept(this, ctx);
         }
 
-        private LLVMValueRef BinaryVal(LLVMValueRef lhs_val, LLVMValueRef rhs_val, ExprType nodeType)
+        private LLVMValueRef BinaryVal(LLVMValueRef lhs_val, LLVMValueRef rhs_val, ExpressionType nodeType)
         {
             switch (nodeType)
             {
-                case AddExpr:
+                case Add:
                     return _builder.BuildFAdd(lhs_val, rhs_val, "addtmp");
-                case SubtractExpr:
+                case Subtract:
                     return _builder.BuildFSub(lhs_val, rhs_val, "addtmp");
-                case MultiplyExpr:
+                case Multiply:
                     return _builder.BuildFMul(lhs_val, rhs_val, "addtmp");
-                case LessThanExpr:
+                case LessThan:
                     var i = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhs_val, rhs_val, "cmptmp");
                     return _builder.BuildUIToFP(i, LLVMTypeRef.Double, "booltmp");
                 default:
@@ -148,14 +148,14 @@ namespace Kaleidoscope
             }
         }
 
-        public (Context, LLVMValueRef) VisitBinaryExprAST(Context ctx, BinaryExprAST expr)
+        public (Context, LLVMValueRef) VisitBinaryExprAST(Context ctx, BinaryExpression expr)
         {
             var (ctxl, lhs_val) = Visit(ctx, expr.Lhs);
             var (ctxr, rhs_val) = Visit(ctxl, expr.Rhs);
             return (ctxr, BinaryVal(lhs_val, rhs_val, expr.NodeType));
         }
 
-        public (Context, LLVMValueRef) VisitCallExprAST(Context ctx, CallExprAST expr)
+        public (Context, LLVMValueRef) VisitCallExprAST(Context ctx, CallExpression expr)
         {
             var func = _module.GetNamedFunction(expr.Callee);
 
@@ -183,7 +183,7 @@ namespace Kaleidoscope
             return (ctx, _builder.BuildCall(func, argsValues, "calltmp"));
         }
 
-        public (Context, LLVMValueRef) VisitForExprAST(Context ctx, ForExprAST expr)
+        public (Context, LLVMValueRef) VisitForExprAST(Context ctx, ForExpression expr)
         {
             var var_name = expr.VarName;
             var start = expr.Start;
@@ -213,7 +213,7 @@ namespace Kaleidoscope
             return (ctx, zero);
         }
 
-        public (Context, LLVMValueRef) VisitFunctionAST(Context ctx, FunctionAST expr)
+        public (Context, LLVMValueRef) VisitFunctionAST(Context ctx, FunctionExpression expr)
         {
             if (!string.IsNullOrWhiteSpace(expr.Proto.Name))
                 _functions[expr.Proto.Name] = expr;
@@ -227,7 +227,13 @@ namespace Kaleidoscope
             return (ctxn2, tf);
         }
 
-        public (Context, LLVMValueRef) VisitIfExpAST(Context ctx, IfExpAST expr)
+        public (Context, LLVMValueRef) VisitExternAST(Context ctx, ExternExpression expr)
+        {
+            _functions[expr.Proto.Name] = expr;
+            return Visit(ctx, expr.Proto);
+        }
+
+        public (Context, LLVMValueRef) VisitIfExpAST(Context ctx, IfExpression expr)
         {
             var _cond = expr.Condition;
             var _then = expr.Then;
@@ -259,12 +265,12 @@ namespace Kaleidoscope
             return (ctx, phi);
         }
 
-        public (Context, LLVMValueRef) VisitNumberExprAST(Context ctx, NumberExprAST expr)
+        public (Context, LLVMValueRef) VisitNumberExprAST(Context ctx, NumberExpression expr)
         {
             return (ctx, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, expr.Value));
         }
 
-        public (Context, LLVMValueRef) VisitPrototypeAST(Context ctx, PrototypeAST expr)
+        public (Context, LLVMValueRef) VisitPrototypeAST(Context ctx, PrototypeExpression expr)
         {
             var name = expr.Name;
             var args = expr.Arguments;
@@ -292,7 +298,7 @@ namespace Kaleidoscope
             return (ctx.AddArguments(f, args), f);
         }
 
-        public (Context, LLVMValueRef) VisitVariableExprAST(Context ctx, VariableExprAST expr)
+        public (Context, LLVMValueRef) VisitVariableExprAST(Context ctx, VariableExpression expr)
         {
             var value = ctx.Get(expr.Name);
 

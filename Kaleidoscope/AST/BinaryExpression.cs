@@ -2,23 +2,23 @@
 {
     using System;
 
-    public sealed class BinaryExprAST : ExprAST
+    public sealed class BinaryExpression : Expression
     {
-        public BinaryExprAST(TokenType op, ExprAST lhs, ExprAST rhs)
+        public BinaryExpression(TokenType op, Expression lhs, Expression rhs)
         {
             switch (op)
             {
                 case TokenType.PLUS:
-                    NodeType = ExprType.AddExpr;
+                    NodeType = ExpressionType.Add;
                     break;
                 case TokenType.MINUS:
-                    NodeType = ExprType.SubtractExpr;
+                    NodeType = ExpressionType.Subtract;
                     break;
                 case TokenType.STAR:
-                    NodeType = ExprType.MultiplyExpr;
+                    NodeType = ExpressionType.Multiply;
                     break;
                 case TokenType.LESS_THAN:
-                    NodeType = ExprType.LessThanExpr;
+                    NodeType = ExpressionType.LessThan;
                     break;
                 default:
                     throw new ArgumentException("op " + op + " is not a valid operator");
@@ -28,13 +28,13 @@
             Rhs = rhs;
         }
 
-        public ExprAST Lhs { get; }
+        public Expression Lhs { get; }
 
-        public ExprAST Rhs { get; }
+        public Expression Rhs { get; }
 
-        public override ExprType NodeType { get; protected set; }
+        public override ExpressionType NodeType { get; protected set; }
 
-        public override TResult Accept<TResult, TContext>(ExprVisitor<TResult, TContext> visitor, TContext ctx)
+        public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
             return visitor.VisitBinaryExprAST(ctx, this);
         }

@@ -30,9 +30,9 @@ namespace Kaleidoscope
             _tokens = tokens;
         }
 
-        public List<ExprAST> Parse()
+        public List<Expression> Parse()
         {
-            var result = new List<ExprAST>();
+            var result = new List<Expression>();
 
             while (!IsAtEnd())
             {
@@ -44,7 +44,7 @@ namespace Kaleidoscope
             return result;
         }
 
-        private ExprAST TopLevel()
+        private Expression TopLevel()
         {
             try
             {
@@ -53,7 +53,7 @@ namespace Kaleidoscope
 
                 var expr = Expression();
 
-                return new FunctionAST(new PrototypeAST("", new List<string>()), expr);
+                return new FunctionExpression(new PrototypeExpression("", new List<string>()), expr);
             }
             catch (ParseError error)
             {
@@ -62,7 +62,7 @@ namespace Kaleidoscope
             }
         }
 
-        private ExprAST Expression(int precedence = 0)
+        private Expression Expression(int precedence = 0)
         {
             var lhs = Primary();
 
@@ -74,12 +74,12 @@ namespace Kaleidoscope
             return lhs;
         }
 
-        private ExprAST ParseBinary(ExprAST lhs)
+        private Expression ParseBinary(Expression lhs)
         {
             var token = Advance();
             var precedence = _binaryOperatorPrecedence[token.Type];
             var rhs = Expression(precedence);
-            return new BinaryExprAST(token.Type, lhs, rhs);
+            return new BinaryExpression(token.Type, lhs, rhs);
         }
 
         private int GetPrecedence()
@@ -89,7 +89,7 @@ namespace Kaleidoscope
             return _binaryOperatorPrecedence.TryGetValue(next.Type, out var value) ? value : 0;
         }
 
-        private ExprAST Primary()
+        private Expression Primary()
         {
             if (Match(LEFT_PAREN))
             {
@@ -104,12 +104,12 @@ namespace Kaleidoscope
                 if (Match(LEFT_PAREN))
                     return Call(name);
 
-                return new VariableExprAST(name);
+                return new VariableExpression(name);
             }
 
             if (Match(NUMBER))
             {
-                return new NumberExprAST((double)Previous().Value);
+                return new NumberExpression((double)Previous().Value);
             }
 
             if (Match(IF))
@@ -125,14 +125,14 @@ namespace Kaleidoscope
             throw Error(Peek(), "Expect expression.");
         }
 
-        private ExprAST For()
+        private Expression For()
         {
             var id = Identifier();
             Consume(EQUAL, "Expect '=' after identifier");
             var start = Expression();
             Consume(COMMA, "Expect ',' after initial value");
             var end = Expression();
-            ExprAST step = null;
+            Expression step = null;
             if (Check(COMMA))
             {
                 Consume(COMMA, "");
@@ -142,10 +142,10 @@ namespace Kaleidoscope
             Consume(IN, "Expect 'in' after for definition");
             var body = Expression();
 
-            return new ForExprAST(id, start, end, step, body);
+            return new ForExpression(id, start, end, step, body);
         }
 
-        private ExprAST If()
+        private Expression If()
         {
             var cond = Expression();
             Consume(THEN, "Expected 'then'");
@@ -153,12 +153,12 @@ namespace Kaleidoscope
             Consume(ELSE, "Expected 'else'");
             var @else = Expression();
 
-            return new IfExpAST(cond, @then, @else);
+            return new IfExpression(cond, @then, @else);
         }
 
-        private ExprAST Call(string name)
+        private Expression Call(string name)
         {
-            var args = new List<ExprAST>();
+            var args = new List<Expression>();
 
             if (!Check(RIGHT_PAREN))
             {
@@ -171,20 +171,20 @@ namespace Kaleidoscope
             }
             Consume(RIGHT_PAREN, "Expected ')'");
 
-            return new CallExprAST(name, args);
+            return new CallExpression(name, args);
         }
 
-        private ExprAST Extern() => Prototype();
+        private Expression Extern() => new ExternExpression(Prototype());
 
-        private ExprAST Definition()
+        private Expression Definition()
         {
             var prototype = Prototype();
             var body = Expression();
 
-            return new FunctionAST(prototype, body);
+            return new FunctionExpression(prototype, body);
         }
 
-        private PrototypeAST Prototype()
+        private PrototypeExpression Prototype()
         {
             var name = Identifier();
             Consume(LEFT_PAREN, "Expected '('.");
@@ -202,7 +202,7 @@ namespace Kaleidoscope
 
             Consume(RIGHT_PAREN, "Expected ')'");
 
-            return new PrototypeAST(name, args);
+            return new PrototypeExpression(name, args);
         }
 
         private string Identifier()
