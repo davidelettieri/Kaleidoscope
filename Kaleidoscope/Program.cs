@@ -9,7 +9,7 @@ namespace Kaleidoscope
     {
         static void Main(string[] args)
         {
-            var emitter = new Interpreter();
+            var interpreter = new Interpreter();
 
             while (true)
             {
@@ -19,7 +19,7 @@ namespace Kaleidoscope
                 var tokens = scanner.ScanTokens();
                 var parser = new Parser(tokens);
                 var ast = parser.Parse();
-                emitter.Run(ast);
+                interpreter.Run(ast);
             }
         }
     }
