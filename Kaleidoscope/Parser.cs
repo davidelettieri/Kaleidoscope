@@ -7,7 +7,9 @@ namespace Kaleidoscope
 {
     class ParseError : Exception
     {
-
+        public ParseError(string message) : base(message)
+        {
+        }
     }
 
 
@@ -32,34 +34,36 @@ namespace Kaleidoscope
 
         public List<Expression> Parse()
         {
-            var result = new List<Expression>();
-
-            while (!IsAtEnd())
+            try
             {
-                var e = TopLevel();
-                result.Add(e);
-                Consume(SEMICOLON, "Expected semi-colon.");
-            }
+                var result = new List<Expression>();
 
-            return result;
+                while (!IsAtEnd())
+                {
+                    var e = TopLevel();
+                    result.Add(e);
+                    Consume(SEMICOLON, "Expected semi-colon.");
+                }
+
+                return result;
+            }
+            catch (ParseError error)
+            {
+                Console.WriteLine(error.Message);
+                Syncronize();
+                return null;
+            }
         }
 
         private Expression TopLevel()
         {
-            try
-            {
-                if (Match(DEF)) return Definition();
-                if (Match(EXTERN)) return Extern();
+            if (Match(DEF)) return Definition();
+            if (Match(EXTERN)) return Extern();
 
-                var expr = Expression();
+            var expr = Expression();
 
-                return new FunctionExpression(new PrototypeExpression("", new List<string>()), expr);
-            }
-            catch (ParseError error)
-            {
-                Syncronize();
-                return null;
-            }
+            return new FunctionExpression(new PrototypeExpression("", new List<string>()), expr);
+
         }
 
         private Expression Expression(int precedence = 0)
@@ -233,9 +237,7 @@ namespace Kaleidoscope
         }
 
         private Exception Error(Token token, string message)
-        {
-            throw new NotImplementedException();
-        }
+            => new ParseError(message);
 
         private bool Check(TokenType type)
         {

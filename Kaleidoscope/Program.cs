@@ -19,7 +19,11 @@ namespace Kaleidoscope
                 var tokens = scanner.ScanTokens();
                 var parser = new Parser(tokens);
                 var ast = parser.Parse();
-                interpreter.Run(ast);
+
+                if (ast is not null)
+                {
+                    interpreter.Run(ast);
+                }
             }
         }
     }
