@@ -20,7 +20,9 @@
         MINUS,
         PLUS,
         LESS_THAN,
-        SEMICOLON
+        SEMICOLON,
+        UNARY,
+        BINARY
     }
 
     public class Token

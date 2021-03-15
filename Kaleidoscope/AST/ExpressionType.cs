@@ -13,6 +13,8 @@
         Number,
         If,
         For,
-        Extern
+        Extern,
+        BinaryOperator,
+        UnaryOperator
     }
 }

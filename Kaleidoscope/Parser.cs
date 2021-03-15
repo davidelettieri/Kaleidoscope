@@ -16,8 +16,8 @@ namespace Kaleidoscope
     public sealed class Parser
     {
         private readonly List<Token> _tokens;
-        private readonly Dictionary<TokenType, int> _binaryOperatorPrecedence =
-            new Dictionary<TokenType, int>()
+        private readonly Dictionary<TokenType, double> _binaryOperatorPrecedence =
+            new Dictionary<TokenType, double>()
             {
                 { LESS_THAN, 10 },
                 { PLUS, 20 },
@@ -25,11 +25,29 @@ namespace Kaleidoscope
                 { STAR, 40 },
             };
 
+        private readonly Dictionary<string, double> _customOperatorsPrecedence;
+
+        private double GetPrecedence(Token token)
+        {
+            if (_binaryOperatorPrecedence.TryGetValue(token.Type, out var p))
+            {
+                return p;
+            }
+
+            if (token.Type == TokenType.IDENTIFIER && _customOperatorsPrecedence.TryGetValue(token.Value.ToString(), out var cp))
+            {
+                return cp;
+            }
+
+            return 0;
+        }
+
         private int _current = 0;
 
-        public Parser(List<Token> tokens)
+        public Parser(List<Token> tokens, Dictionary<string, double> customOperatorPrecedence)
         {
             _tokens = tokens;
+            _customOperatorsPrecedence = customOperatorPrecedence;
         }
 
         public List<Expression> Parse()
@@ -66,7 +84,7 @@ namespace Kaleidoscope
 
         }
 
-        private Expression Expression(int precedence = 0)
+        private Expression Expression(double precedence = 0)
         {
             var lhs = Primary();
 
@@ -81,16 +99,16 @@ namespace Kaleidoscope
         private Expression ParseBinary(Expression lhs)
         {
             var token = Advance();
-            var precedence = _binaryOperatorPrecedence[token.Type];
+            var precedence = GetPrecedence(token);
             var rhs = Expression(precedence);
             return new BinaryExpression(token.Type, lhs, rhs);
         }
 
-        private int GetPrecedence()
+        private double GetPrecedence()
         {
             var next = Peek();
 
-            return _binaryOperatorPrecedence.TryGetValue(next.Type, out var value) ? value : 0;
+            return GetPrecedence(next);
         }
 
         private Expression Primary()
@@ -188,9 +206,35 @@ namespace Kaleidoscope
             return new FunctionExpression(prototype, body);
         }
 
+        public enum PrototypeType
+        {
+            Function,
+            Unary,
+            Binary
+        }
+
         private PrototypeExpression Prototype()
         {
+            var prototypeType = PrototypeType.Function;
+            var precedence = 0.0;
+
+            if (Match(UNARY))
+            {
+                prototypeType = PrototypeType.Unary;
+            }
+            else if (Match(BINARY))
+            {
+                prototypeType = PrototypeType.Binary;
+            }
+
             var name = Identifier();
+
+            if (prototypeType == PrototypeType.Binary)
+            {
+                Consume(NUMBER, "Expected number after operator identifier.");
+                precedence = (double)Previous().Value;
+            }
+
             Consume(LEFT_PAREN, "Expected '('.");
             var args = new List<string>();
 
@@ -204,7 +248,28 @@ namespace Kaleidoscope
                 while (Match(COMMA));
             }
 
-            Consume(RIGHT_PAREN, "Expected ')'");
+            Consume(RIGHT_PAREN, "Expected ')'.");
+
+            if (prototypeType == PrototypeType.Unary)
+            {
+                if (args.Count != 1)
+                {
+                    throw new ParseError("Unary operators accept exactly one parameter");
+                }
+
+                return new UnaryOperatorExpression(name, args);
+            }
+            else if (prototypeType == PrototypeType.Binary)
+            {
+                if (args.Count != 2)
+                {
+                    throw new ParseError("Binary operators accept exactly two parameter");
+                }
+
+                _customOperatorsPrecedence[name] = precedence;
+
+                return new BinaryOperatorExpression(name, precedence, args);
+            }
 
             return new PrototypeExpression(name, args);
         }
@@ -263,7 +328,7 @@ namespace Kaleidoscope
         private bool IsAtEnd() => Peek().Type == EOF;
         private Token Peek() => _tokens[_current];
         private Token Previous() => _tokens[_current - 1];
-        private int PeekPrecedence()
+        private double PeekPrecedence()
         {
             var next = Peek();
             var tokenType = next.Type;

@@ -307,5 +307,15 @@ namespace Kaleidoscope
 
             return (ctx, value.GetValueOrDefault());
         }
+
+        // public (Context, LLVMValueRef) VisitBinaryOperator(Context ctx, BinaryOperatorExpression expr)
+        // {
+        //     throw new NotImplementedException();
+        // }
+
+        // public (Context, LLVMValueRef) VisitUnaryOperator(Context ctx, UnaryOperatorExpression expr)
+        // {
+        //     throw new NotImplementedException();
+        // }
     }
 }

@@ -20,6 +20,8 @@ namespace Kaleidoscope
             { "else", ELSE },
             { "for", FOR },
             { "in", IN },
+            { "unary", UNARY },
+            { "binary", BINARY },
         };
 
         public Scanner(string source)
@@ -83,13 +85,13 @@ namespace Kaleidoscope
                     }
                     break;
                 default:
-                    if (char.IsLetter(c))
-                    {
-                        Identifier();
-                    }
                     if (char.IsDigit(c))
                     {
                         Number();
+                    }
+                    else
+                    {
+                        Identifier();
                     }
                     break;
             }
