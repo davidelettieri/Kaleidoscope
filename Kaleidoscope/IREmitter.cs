@@ -107,10 +107,10 @@ namespace Kaleidoscope
 
         public void Run(List<Expression> exprs)
         {
-            InitializeModule();
-            var ctx = new Context();
             foreach (var item in exprs)
             {
+                InitializeModule();
+                var ctx = new Context();
                 var (ctxn, v) = Visit(ctx, item);
                 if (item is FunctionExpression f && string.IsNullOrWhiteSpace(f.Proto.Name))
                 {
@@ -119,10 +119,10 @@ namespace Kaleidoscope
                     Console.WriteLine("> {0}", fres);
                 }
                 ctx = ctxn;
+                _passManager.Dispose();
+                _builder.Dispose();
+                _module.Dispose();
             }
-            _passManager.Dispose();
-            _builder.Dispose();
-            _module.Dispose();
         }
 
         private (Context, LLVMValueRef) Visit(Context ctx, Expression body)
