@@ -26,6 +26,8 @@ namespace Kaleidoscope
             };
 
         private readonly Dictionary<string, double> _customOperatorsPrecedence = new Dictionary<string, double>();
+        private readonly HashSet<string> _unaryOperators = new HashSet<string>(StringComparer.Ordinal);
+
 
         private double GetPrecedence(Token token)
         {
@@ -120,8 +122,9 @@ namespace Kaleidoscope
             if (Match(IDENTIFIER))
             {
                 var name = Previous().Value as string;
-                if (Match(LEFT_PAREN))
-                    return Call(name);
+                var isUnary = _unaryOperators.Contains(name);
+                if (Match(LEFT_PAREN) || isUnary)
+                    return Call(name,isUnary);
 
                 return new VariableExpression(name);
             }
@@ -175,7 +178,7 @@ namespace Kaleidoscope
             return new IfExpression(cond, @then, @else);
         }
 
-        private Expression Call(string name)
+        private Expression Call(string name, bool unary)
         {
             var args = new List<Expression>();
 
@@ -188,7 +191,11 @@ namespace Kaleidoscope
                 }
                 while (Match(COMMA));
             }
-            Consume(RIGHT_PAREN, "Expected ')'");
+
+            if (!unary)
+            {
+                Consume(RIGHT_PAREN, "Expected ')'");
+            }
 
             return new CallExpression(name, args);
         }
@@ -253,6 +260,8 @@ namespace Kaleidoscope
                 {
                     throw new ParseError("Unary operators accept exactly one parameter");
                 }
+
+                _unaryOperators.Add(name);
 
                 return new UnaryOperatorExpression(name, args);
             }
