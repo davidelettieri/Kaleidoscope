@@ -4,9 +4,10 @@
 
     public sealed class BinaryExpression : Expression
     {
-        public BinaryExpression(TokenType op, Expression lhs, Expression rhs)
+        public BinaryExpression(Token token, Expression lhs, Expression rhs)
         {
-            switch (op)
+            OperatorToken = token;
+            switch (token.Type)
             {
                 case TokenType.PLUS:
                     NodeType = ExpressionType.Add;
@@ -20,8 +21,11 @@
                 case TokenType.LESS_THAN:
                     NodeType = ExpressionType.LessThan;
                     break;
+                case TokenType.IDENTIFIER:
+                    NodeType = ExpressionType.BinaryOperator;
+                    break;
                 default:
-                    throw new ArgumentException("op " + op + " is not a valid operator");
+                    throw new ArgumentException("op " + token.Type + " is not a valid operator");
             }
 
             Lhs = lhs;
@@ -29,9 +33,8 @@
         }
 
         public Expression Lhs { get; }
-
         public Expression Rhs { get; }
-
+        public Token OperatorToken { get; }
         public override ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)

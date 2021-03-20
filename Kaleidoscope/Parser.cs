@@ -15,7 +15,7 @@ namespace Kaleidoscope
 
     public sealed class Parser
     {
-        private readonly List<Token> _tokens;
+        private List<Token> _tokens;
         private readonly Dictionary<TokenType, double> _binaryOperatorPrecedence =
             new Dictionary<TokenType, double>()
             {
@@ -25,7 +25,7 @@ namespace Kaleidoscope
                 { STAR, 40 },
             };
 
-        private readonly Dictionary<string, double> _customOperatorsPrecedence;
+        private readonly Dictionary<string, double> _customOperatorsPrecedence = new Dictionary<string, double>();
 
         private double GetPrecedence(Token token)
         {
@@ -44,14 +44,11 @@ namespace Kaleidoscope
 
         private int _current = 0;
 
-        public Parser(List<Token> tokens, Dictionary<string, double> customOperatorPrecedence)
+        public List<Expression> Parse(List<Token> tokens)
         {
+            _current = 0;
             _tokens = tokens;
-            _customOperatorsPrecedence = customOperatorPrecedence;
-        }
 
-        public List<Expression> Parse()
-        {
             try
             {
                 var result = new List<Expression>();
@@ -101,7 +98,7 @@ namespace Kaleidoscope
             var token = Advance();
             var precedence = GetPrecedence(token);
             var rhs = Expression(precedence);
-            return new BinaryExpression(token.Type, lhs, rhs);
+            return new BinaryExpression(token, lhs, rhs);
         }
 
         private double GetPrecedence()

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Kaleidoscope.AST;
@@ -9,47 +8,6 @@ using static Kaleidoscope.AST.ExpressionType;
 
 namespace Kaleidoscope
 {
-    public class Context
-    {
-        private readonly ImmutableDictionary<string, LLVMValueRef> _source;
-
-        public Context()
-        {
-            _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
-        }
-
-        private Context(ImmutableDictionary<string, LLVMValueRef> source)
-        {
-            _source = source;
-        }
-
-        public Context Add(string key, LLVMValueRef value)
-            => new Context(_source.Remove(key).Add(key, value));
-
-        public Context AddArguments(LLVMValueRef function, List<string> arguments)
-        {
-            var s = _source;
-
-            for (int i = 0; i < arguments.Count; i++)
-            {
-                var name = arguments[i];
-                var param = function.GetParam((uint)i);
-                param.Name = name;
-                s = s.Add(name, param);
-            }
-
-            return new Context(s);
-        }
-
-        public LLVMValueRef? Get(string key)
-        {
-            if (_source.TryGetValue(key, out var value))
-                return value;
-
-            return null;
-        }
-    }
-
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Print(double d);
 
@@ -150,6 +108,12 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitBinaryExprAST(Context ctx, BinaryExpression expr)
         {
+            if (expr.NodeType == ExpressionType.BinaryOperator)
+            {
+                var callExpr = new CallExpression(expr.OperatorToken.Value as string, new List<Expression>() { expr.Lhs, expr.Rhs });
+                return Visit(ctx, callExpr);
+            }
+
             var (ctxl, lhs_val) = Visit(ctx, expr.Lhs);
             var (ctxr, rhs_val) = Visit(ctxl, expr.Rhs);
             return (ctxr, BinaryVal(lhs_val, rhs_val, expr.NodeType));
@@ -307,15 +271,5 @@ namespace Kaleidoscope
 
             return (ctx, value.GetValueOrDefault());
         }
-
-        // public (Context, LLVMValueRef) VisitBinaryOperator(Context ctx, BinaryOperatorExpression expr)
-        // {
-        //     throw new NotImplementedException();
-        // }
-
-        // public (Context, LLVMValueRef) VisitUnaryOperator(Context ctx, UnaryOperatorExpression expr)
-        // {
-        //     throw new NotImplementedException();
-        // }
     }
 }

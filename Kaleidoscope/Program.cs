@@ -10,7 +10,7 @@ namespace Kaleidoscope
         static void Main(string[] args)
         {
             var interpreter = new Interpreter();
-            var customOperatorPrecedence = new Dictionary<string, double>();
+            var parser = new Parser();
 
             while (true)
             {
@@ -18,8 +18,7 @@ namespace Kaleidoscope
                 var source = Console.ReadLine();
                 var scanner = new Scanner(source);
                 var tokens = scanner.ScanTokens();
-                var parser = new Parser(tokens, customOperatorPrecedence);
-                var ast = parser.Parse();
+                var ast = parser.Parse(tokens);
 
                 if (ast is not null)
                 {
