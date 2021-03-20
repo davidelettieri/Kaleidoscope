@@ -19,11 +19,11 @@ namespace Kaleidoscope
         private LLVMExecutionEngineRef _engine;
         private readonly Dictionary<string, Expression> _functions;
 
-        private void Printd(double x)
+        private void PutChard(double x)
         {
             try
             {
-                Console.WriteLine("> {0}", x);
+                Console.Write((char)x);
             }
             catch
             {
@@ -40,12 +40,6 @@ namespace Kaleidoscope
             LLVM.InitializeX86AsmPrinter();
             _functions = new Dictionary<string, Expression>();
 
-            // var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, new[] { LLVMTypeRef.Double }, false);
-            // var write = _module.AddFunction("print", ft);
-            // write.Linkage = LLVMLinkage.LLVMExternalLinkage;
-            // Delegate d = new Print(Printd);
-            // var p = Marshal.GetFunctionPointerForDelegate(d);
-            // _engine.AddGlobalMapping(write, p);
         }
 
         private void InitializeModule()
@@ -61,6 +55,13 @@ namespace Kaleidoscope
             _passManager.AddCFGSimplificationPass();
             _passManager.InitializeFunctionPassManager();
             _engine = _module.CreateMCJITCompiler();
+
+            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, new[] { LLVMTypeRef.Double }, false);
+            var write = _module.AddFunction("putchard", ft);
+            write.Linkage = LLVMLinkage.LLVMExternalLinkage;
+            Delegate d = new Print(PutChard);
+            var p = Marshal.GetFunctionPointerForDelegate(d);
+            _engine.AddGlobalMapping(write, p);
         }
 
         public void Run(List<Expression> exprs)
@@ -253,12 +254,11 @@ namespace Kaleidoscope
             }
             else
             {
-                var retType = expr.Name == "write" ? LLVMTypeRef.Void : LLVMTypeRef.Double;
+                var retType = expr.Name == "putchard" ? LLVMTypeRef.Void : LLVMTypeRef.Double;
                 var ft = LLVMTypeRef.CreateFunction(retType, doubles, false);
                 f = _module.AddFunction(name, ft);
                 f.Linkage = LLVMLinkage.LLVMExternalLinkage;
             }
-
 
             return (ctx.AddArguments(f, args), f);
         }
