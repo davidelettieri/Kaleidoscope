@@ -85,7 +85,7 @@ namespace Kaleidoscope
 
         private Expression Expression(double precedence = 0)
         {
-            var lhs = Primary();
+            var lhs = Unary();
 
             while (precedence < GetPrecedence())
             {
@@ -110,6 +110,19 @@ namespace Kaleidoscope
             return GetPrecedence(next);
         }
 
+        private Expression Unary()
+        {
+            var next = Peek();
+            if (_unaryOperators.Contains(next.Value?.ToString()))
+            {
+                var @operator = Advance();
+                var operand = Unary();
+                return new UnaryExpression(@operator, operand);
+            }
+
+            return Primary();
+        }
+
         private Expression Primary()
         {
             if (Match(LEFT_PAREN))
@@ -122,10 +135,8 @@ namespace Kaleidoscope
             if (Match(IDENTIFIER))
             {
                 var name = Previous().Value as string;
-                var isUnary = _unaryOperators.Contains(name);
-                if (Match(LEFT_PAREN) || isUnary)
-                    return Call(name,isUnary);
-
+                if (Match(LEFT_PAREN))
+                    return Call(name);
                 return new VariableExpression(name);
             }
 
@@ -178,7 +189,7 @@ namespace Kaleidoscope
             return new IfExpression(cond, @then, @else);
         }
 
-        private Expression Call(string name, bool unary)
+        private Expression Call(string name)
         {
             var args = new List<Expression>();
 
@@ -192,10 +203,7 @@ namespace Kaleidoscope
                 while (Match(COMMA));
             }
 
-            if (!unary)
-            {
-                Consume(RIGHT_PAREN, "Expected ')'");
-            }
+            Consume(RIGHT_PAREN, "Expected ')'");
 
             return new CallExpression(name, args);
         }

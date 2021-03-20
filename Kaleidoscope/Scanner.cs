@@ -89,9 +89,13 @@ namespace Kaleidoscope
                     {
                         Number();
                     }
-                    else
+                    else if (char.IsLetter(c))
                     {
                         Identifier();
+                    }
+                    else
+                    {
+                        AddIdentifierToken(c.ToString());
                     }
                     break;
             }

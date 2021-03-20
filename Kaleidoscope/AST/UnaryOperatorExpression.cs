@@ -4,7 +4,7 @@ namespace Kaleidoscope.AST
 {
     public sealed class UnaryOperatorExpression : PrototypeExpression
     {
-        public UnaryOperatorExpression(string name, List<string> args) : base(name, args)
+        public UnaryOperatorExpression(string name, List<string> args) : base("unary_" + name, args)
         {
             this.NodeType = ExpressionType.UnaryOperator;
         }

@@ -15,6 +15,7 @@
         For,
         Extern,
         BinaryOperator,
-        UnaryOperator
+        UnaryOperator,
+        Unary
     }
 }

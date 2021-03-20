@@ -110,7 +110,8 @@ namespace Kaleidoscope
         {
             if (expr.NodeType == ExpressionType.BinaryOperator)
             {
-                var callExpr = new CallExpression(expr.OperatorToken.Value as string, new List<Expression>() { expr.Lhs, expr.Rhs });
+                var functionName = "binary_" + expr.OperatorToken.Value as string;
+                var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Lhs, expr.Rhs });
                 return Visit(ctx, callExpr);
             }
 
@@ -270,6 +271,13 @@ namespace Kaleidoscope
                 throw new InvalidOperationException("variable not bound");
 
             return (ctx, value.GetValueOrDefault());
+        }
+
+        public (Context, LLVMValueRef) VisitUnaryExpression(Context ctx, UnaryExpression expr)
+        {
+            var functionName = "unary_" + expr.Operator.Value as string;
+            var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Operand });
+            return Visit(ctx, callExpr);
         }
     }
 }

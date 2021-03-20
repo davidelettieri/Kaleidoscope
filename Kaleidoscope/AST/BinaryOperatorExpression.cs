@@ -4,7 +4,7 @@ namespace Kaleidoscope.AST
 
     public sealed class BinaryOperatorExpression : PrototypeExpression
     {
-        public BinaryOperatorExpression(string name, double precedence, List<string> args) : base(name, args)
+        public BinaryOperatorExpression(string name, double precedence, List<string> args) : base("binary_" + name, args)
         {
             Precedence = precedence;
             NodeType = ExpressionType.BinaryOperator;

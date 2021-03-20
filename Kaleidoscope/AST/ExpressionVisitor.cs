@@ -11,5 +11,6 @@
         TResult VisitPrototypeAST(TContext ctx, PrototypeExpression expr);
         TResult VisitVariableExprAST(TContext ctx, VariableExpression expr);
         TResult VisitExternAST(TContext ctx, ExternExpression expr);
+        TResult VisitUnaryExpression(TContext context, UnaryExpression expr);
     }
 }
