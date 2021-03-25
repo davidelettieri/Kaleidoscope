@@ -161,7 +161,9 @@ namespace Kaleidoscope
         private Expression For()
         {
             var id = Identifier();
-            Consume(EQUAL, "Expect '=' after identifier");
+            var next = Advance();
+            if (next.Lexeme != "=")
+                throw Error(Peek(), "Expect '=' after identifier");
             var start = Expression();
             Consume(COMMA, "Expect ',' after initial value");
             var end = Expression();
@@ -316,7 +318,7 @@ namespace Kaleidoscope
         }
 
         private Exception Error(Token token, string message)
-            => new ParseError(message);
+            => new ParseError(message + " at line " + token.Line);
 
         private bool Check(TokenType type)
         {

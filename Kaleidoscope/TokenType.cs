@@ -14,7 +14,6 @@
         IN,
         RIGHT_PAREN,
         LEFT_PAREN,
-        EQUAL,
         COMMA,
         SEMICOLON,
         UNARY,

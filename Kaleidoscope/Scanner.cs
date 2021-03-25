@@ -51,9 +51,6 @@ namespace Kaleidoscope
 
             switch (c)
             {
-                case '=':
-                    AddToken(EQUAL);
-                    break;
                 case '(':
                     AddToken(LEFT_PAREN);
                     break;
