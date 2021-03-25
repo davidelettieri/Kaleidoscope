@@ -7,25 +7,26 @@
         public BinaryExpression(Token token, Expression lhs, Expression rhs)
         {
             OperatorToken = token;
-            switch (token.Type)
+            switch (token.Lexeme)
             {
-                case TokenType.PLUS:
+                case "+":
                     NodeType = ExpressionType.Add;
                     break;
-                case TokenType.MINUS:
+                case "-":
                     NodeType = ExpressionType.Subtract;
                     break;
-                case TokenType.STAR:
+                case "*":
                     NodeType = ExpressionType.Multiply;
                     break;
-                case TokenType.LESS_THAN:
+                case "<":
                     NodeType = ExpressionType.LessThan;
                     break;
-                case TokenType.IDENTIFIER:
-                    NodeType = ExpressionType.BinaryOperator;
-                    break;
                 default:
-                    throw new ArgumentException("op " + token.Type + " is not a valid operator");
+                    if (token.Type == TokenType.IDENTIFIER)
+                        NodeType = ExpressionType.BinaryOperator;
+                    else
+                        throw new ArgumentException("op " + token.Type + " is not a valid operator");
+                    break;
             }
 
             Lhs = lhs;

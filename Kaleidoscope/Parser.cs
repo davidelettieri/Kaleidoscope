@@ -16,13 +16,13 @@ namespace Kaleidoscope
     public sealed class Parser
     {
         private List<Token> _tokens;
-        private readonly Dictionary<TokenType, double> _binaryOperatorPrecedence =
-            new Dictionary<TokenType, double>()
+        private readonly Dictionary<string, double> _binaryOperatorPrecedence =
+            new Dictionary<string, double>()
             {
-                { LESS_THAN, 10 },
-                { PLUS, 20 },
-                { MINUS, 20 },
-                { STAR, 40 },
+                { "<", 10 },
+                { "+", 20 },
+                { "-", 20 },
+                { "*", 40 },
             };
 
         private readonly Dictionary<string, double> _customOperatorsPrecedence = new Dictionary<string, double>();
@@ -31,7 +31,7 @@ namespace Kaleidoscope
 
         private double GetPrecedence(Token token)
         {
-            if (_binaryOperatorPrecedence.TryGetValue(token.Type, out var p))
+            if (_binaryOperatorPrecedence.TryGetValue(token.Lexeme, out var p))
             {
                 return p;
             }
@@ -345,8 +345,7 @@ namespace Kaleidoscope
         private double PeekPrecedence()
         {
             var next = Peek();
-            var tokenType = next.Type;
-            return _binaryOperatorPrecedence.TryGetValue(tokenType, out var value) ? value : -1;
+            return _binaryOperatorPrecedence.TryGetValue(next.Lexeme, out var value) ? value : -1;
         }
 
         private void Syncronize()

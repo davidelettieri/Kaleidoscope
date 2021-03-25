@@ -54,18 +54,6 @@ namespace Kaleidoscope
                 case '=':
                     AddToken(EQUAL);
                     break;
-                case '*':
-                    AddToken(STAR);
-                    break;
-                case '-':
-                    AddToken(MINUS);
-                    break;
-                case '+':
-                    AddToken(PLUS);
-                    break;
-                case '<':
-                    AddToken(LESS_THAN);
-                    break;
                 case '(':
                     AddToken(LEFT_PAREN);
                     break;
@@ -176,9 +164,9 @@ namespace Kaleidoscope
 
         private bool IsDigit(char c) => char.IsDigit(c);
 
-        void AddToken(TokenType type) => _tokens.Add(new Token(type, _start, _current - _start, _line));
-        void AddIdentifierToken(string value) => _tokens.Add(new Token(IDENTIFIER, _start, _current - _start, _line, value));
-        void AddNumberToken(double value) => _tokens.Add(new Token(NUMBER, _start, _current - _start, _line, value));
+        void AddToken(TokenType type) => _tokens.Add(new Token(type, _source[_start.._current], _line));
+        void AddIdentifierToken(string value) => _tokens.Add(new Token(IDENTIFIER, _source[_start.._current], _line, value));
+        void AddNumberToken(double value) => _tokens.Add(new Token(NUMBER, _source[_start.._current], _line, value));
         private bool IsAtEnd() => _current >= _source.Length;
     }
 }
