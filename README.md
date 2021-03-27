@@ -11,3 +11,14 @@ Some useful resources are:
 The aim of the project was to try to use LLVMSharp and to have something running wih LLVM. The behavior of the demo is not the same as the official tutorial (which I did not run) nor as the C# examples in LLVMSharp, which I was not able to make it run correctly.
 
 As of today the project should support almost everything up to Chapter 4 of the official Kaleidscope tutorial. Feel free to drop me a line or to open an issue. Be kind it's a work in progress :)
+
+## Some differences with the official Kaleidoscope tutorial
+
+* Functions definitions requires a comma ',' between arguments.
+* I defined a `putchard` function which uses `Console.Writeline`.
+* I used the visitor pattern in the interpreter/emitter
+* I defined more AST types
+
+## Run the mandelbrot set implementation
+
+Look for the mandelbrot file included in the sources and from the folder Kaleidoscope run `dotnet run mandelbrot`
