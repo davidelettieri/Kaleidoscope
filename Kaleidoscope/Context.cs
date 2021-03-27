@@ -23,6 +23,9 @@ namespace Kaleidoscope
 
         public Context AddArguments(LLVMValueRef function, List<string> arguments)
         {
+            if (arguments.Count == 0)
+                return this;
+                
             var s = _source;
 
             for (int i = 0; i < arguments.Count; i++)

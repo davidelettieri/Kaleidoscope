@@ -255,7 +255,7 @@ namespace Kaleidoscope
             }
             else
             {
-                var retType = expr.Name == "putchard" ? LLVMTypeRef.Double : LLVMTypeRef.Double;
+                var retType = LLVMTypeRef.Double;
                 var ft = LLVMTypeRef.CreateFunction(retType, doubles, false);
                 f = _module.AddFunction(name, ft);
                 f.Linkage = LLVMLinkage.LLVMExternalLinkage;
