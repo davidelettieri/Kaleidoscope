@@ -19,7 +19,7 @@ namespace Kaleidoscope
         }
 
         public Context Add(string key, LLVMValueRef value)
-            => new Context(_source.Remove(key).Add(key, value));
+            => new Context(_source.SetItem(key, value));
 
         public Context AddArguments(LLVMValueRef function, List<string> arguments)
         {
@@ -30,7 +30,7 @@ namespace Kaleidoscope
                 var name = arguments[i];
                 var param = function.GetParam((uint)i);
                 param.Name = name;
-                s = s.Add(name, param);
+                s = s.SetItem(name, param);
             }
 
             return new Context(s);

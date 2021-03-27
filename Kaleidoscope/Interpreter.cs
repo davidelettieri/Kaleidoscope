@@ -54,9 +54,9 @@ namespace Kaleidoscope
             _passManager.AddGVNPass();
             _passManager.AddCFGSimplificationPass();
             _passManager.InitializeFunctionPassManager();
-            _engine = _module.CreateMCJITCompiler();
+            _engine = _module.CreateInterpreter();
 
-            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Void, new[] { LLVMTypeRef.Double }, false);
+            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, new[] { LLVMTypeRef.Double }, false);
             var write = _module.AddFunction("putchard", ft);
             write.Linkage = LLVMLinkage.LLVMExternalLinkage;
             Delegate d = new Print(PutChard);
@@ -66,9 +66,9 @@ namespace Kaleidoscope
 
         public void Run(List<Expression> exprs)
         {
+            InitializeModule();
             foreach (var item in exprs)
             {
-                InitializeModule();
                 var ctx = new Context();
                 var (ctxn, v) = Visit(ctx, item);
                 if (item is FunctionExpression f && string.IsNullOrWhiteSpace(f.Proto.Name))
@@ -78,10 +78,11 @@ namespace Kaleidoscope
                     Console.WriteLine("> {0}", fres);
                 }
                 ctx = ctxn;
-                _passManager.Dispose();
-                _builder.Dispose();
-                _module.Dispose();
+
             }
+            _passManager.Dispose();
+            _builder.Dispose();
+            _module.Dispose();
         }
 
         private (Context, LLVMValueRef) Visit(Context ctx, Expression body)
@@ -254,7 +255,7 @@ namespace Kaleidoscope
             }
             else
             {
-                var retType = expr.Name == "putchard" ? LLVMTypeRef.Void : LLVMTypeRef.Double;
+                var retType = expr.Name == "putchard" ? LLVMTypeRef.Double : LLVMTypeRef.Double;
                 var ft = LLVMTypeRef.CreateFunction(retType, doubles, false);
                 f = _module.AddFunction(name, ft);
                 f.Linkage = LLVMLinkage.LLVMExternalLinkage;
