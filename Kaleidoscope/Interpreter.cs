@@ -54,7 +54,7 @@ namespace Kaleidoscope
             _passManager.AddGVNPass();
             _passManager.AddCFGSimplificationPass();
             _passManager.InitializeFunctionPassManager();
-            _engine = _module.CreateInterpreter();
+            _engine = _module.CreateMCJITCompiler();
 
             var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, new[] { LLVMTypeRef.Double }, false);
             var write = _module.AddFunction("putchard", ft);
@@ -67,19 +67,25 @@ namespace Kaleidoscope
         public void Run(List<Expression> exprs)
         {
             InitializeModule();
+            var toRun = new List<LLVMValueRef>();
             foreach (var item in exprs)
             {
                 var ctx = new Context();
                 var (ctxn, v) = Visit(ctx, item);
-                if (item is FunctionExpression f && string.IsNullOrWhiteSpace(f.Proto.Name))
+                if (item is FunctionExpression f && f.Proto?.Name == "anon_expr")
                 {
-                    var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());
-                    var fres = LLVMTypeRef.Double.GenericValueToFloat(res);
-                    Console.WriteLine("> {0}", fres);
+                    toRun.Add(v);
                 }
                 ctx = ctxn;
-
             }
+
+            foreach (var v in toRun)
+            {
+                var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());
+                var fres = LLVMTypeRef.Double.GenericValueToFloat(res);
+                Console.WriteLine("> {0}", fres);
+            }
+
             _passManager.Dispose();
             _builder.Dispose();
             _module.Dispose();
@@ -245,7 +251,7 @@ namespace Kaleidoscope
             Array.Fill(doubles, LLVMTypeRef.Double);
             var f = _module.GetNamedFunction(name);
 
-            if (f.Handle != IntPtr.Zero)
+            if (name != "anon_expr" && f.Handle != IntPtr.Zero)
             {
                 if (f.BasicBlocksCount != 0)
                     throw new InvalidOperationException("redefinition of function.");

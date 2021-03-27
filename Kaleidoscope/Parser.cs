@@ -79,7 +79,7 @@ namespace Kaleidoscope
 
             var expr = Expression();
 
-            return new FunctionExpression(new PrototypeExpression("", new List<string>()), expr);
+            return new FunctionExpression(new PrototypeExpression("anon_expr", new List<string>()), expr);
 
         }
 
