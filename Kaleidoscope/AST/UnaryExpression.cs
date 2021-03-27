@@ -15,7 +15,7 @@ namespace Kaleidoscope.AST
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitUnaryExpression(ctx, this);
+            return visitor.VisitUnary(ctx, this);
         }
     }
 }

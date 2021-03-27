@@ -14,7 +14,7 @@
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitNumberExprAST(ctx,this);
+            return visitor.VisitNumber(ctx,this);
         }
     }
 }

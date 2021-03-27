@@ -20,7 +20,7 @@
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitIfExpAST(ctx, this);
+            return visitor.VisitIf(ctx, this);
         }
     }
 }

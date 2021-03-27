@@ -2,15 +2,15 @@
 {
     public interface ExpressionVisitor<TResult, TContext>
     {
-        TResult VisitBinaryExprAST(TContext ctx, BinaryExpression expr);
-        TResult VisitCallExprAST(TContext ctx, CallExpression expr);
-        TResult VisitForExprAST(TContext ctx, ForExpression expr);
-        TResult VisitFunctionAST(TContext ctx, FunctionExpression expr);
-        TResult VisitIfExpAST(TContext ctx, IfExpression expr);
-        TResult VisitNumberExprAST(TContext ctx, NumberExpression expr);
-        TResult VisitPrototypeAST(TContext ctx, PrototypeExpression expr);
-        TResult VisitVariableExprAST(TContext ctx, VariableExpression expr);
-        TResult VisitExternAST(TContext ctx, ExternExpression expr);
-        TResult VisitUnaryExpression(TContext context, UnaryExpression expr);
+        TResult VisitBinary(TContext ctx, BinaryExpression expr);
+        TResult VisitCall(TContext ctx, CallExpression expr);
+        TResult VisitFor(TContext ctx, ForExpression expr);
+        TResult VisitFunction(TContext ctx, FunctionExpression expr);
+        TResult VisitIf(TContext ctx, IfExpression expr);
+        TResult VisitNumber(TContext ctx, NumberExpression expr);
+        TResult VisitPrototype(TContext ctx, PrototypeExpression expr);
+        TResult VisitVariable(TContext ctx, VariableExpression expr);
+        TResult VisitExtern(TContext ctx, ExternExpression expr);
+        TResult VisitUnary(TContext context, UnaryExpression expr);
     }
 }

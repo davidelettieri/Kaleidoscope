@@ -40,7 +40,7 @@
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitBinaryExprAST(ctx, this);
+            return visitor.VisitBinary(ctx, this);
         }
     }
 }

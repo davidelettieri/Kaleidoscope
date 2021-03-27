@@ -14,7 +14,7 @@ namespace Kaleidoscope.AST
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitPrototypeAST(ctx, this);
+            return visitor.VisitPrototype(ctx, this);
         }
     }
 }

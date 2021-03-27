@@ -19,7 +19,7 @@
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
-            return visitor.VisitCallExprAST(ctx, this);
+            return visitor.VisitCall(ctx, this);
         }
     }
 }
