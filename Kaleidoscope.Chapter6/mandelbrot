@@ -24,8 +24,6 @@ def binary& 6 (LHS,RHS)
   else
     !!RHS;
 
-def binary = 9 (LHS,RHS) !(LHS < RHS | LHS > RHS);
-
 def binary : 1 (x,y) y;
 
 def printdensity(d)

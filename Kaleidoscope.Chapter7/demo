@@ -1,0 +1,4 @@
+def binary : 1 (x,y) y;
+var sum = 0 in ((for i = 0, i < 11 in sum = sum +i): sum);
+def fibi(x) var a = 0, b = 1, c in ((for i = 1, i < x in c = a + b : a = b : b = c) : b);
+fibi(1);fibi(2);fibi(3);fibi(4);fibi(5);fibi(6);fibi(7);fibi(8);fibi(9);fibi(10);fibi(11);

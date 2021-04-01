@@ -117,6 +117,9 @@ namespace Kaleidoscope
                 case LessThan:
                     var i = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhs_val, rhs_val, "cmptmp");
                     return _builder.BuildUIToFP(i, LLVMTypeRef.Double, "booltmp");
+                case Equal:
+                    var j = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOEQ, lhs_val, rhs_val, "cmptmp");
+                    return _builder.BuildUIToFP(j, LLVMTypeRef.Double, "booltmp");
                 default:
                     throw new InvalidOperationException();
             }
@@ -129,6 +132,17 @@ namespace Kaleidoscope
                 var functionName = "binary_" + expr.OperatorToken.Value as string;
                 var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Lhs, expr.Rhs });
                 return Visit(ctx, callExpr);
+            }
+            else if (expr.NodeType == ExpressionType.Assign)
+            {
+                if (expr.Lhs is VariableExpression ve)
+                {
+                    var (ctxv, rhs) = Visit(ctx, expr.Rhs);
+                    var value = ctx.Get(ve.Name);
+                    _builder.BuildStore(rhs, value.Value);
+                    return (ctxv, value.Value);
+                }
+                throw new InvalidOperationException("Expected variable in lhs of assign operator");
             }
 
             var (ctxl, lhs_val) = Visit(ctx, expr.Lhs);
@@ -145,8 +159,7 @@ namespace Kaleidoscope
                 if (_functions.TryGetValue(expr.Callee, out var oldExpr))
                 {
                     var pos = _builder.InsertBlock;
-                    var (ctx1, f) = Visit(ctx, oldExpr);
-                    ctx = ctx1;
+                    var (_, f) = Visit(ctx, oldExpr);
                     func = f;
                     _builder.PositionAtEnd(pos);
                 }
@@ -167,22 +180,23 @@ namespace Kaleidoscope
         public (Context, LLVMValueRef) VisitFor(Context ctx, ForExpression expr)
         {
             var var_name = expr.VarName;
+            var ctx1 = ctx.Add(var_name, _builder);
             var start = expr.Start;
             var end_ = expr.End;
             var step = expr.Step;
             var body = expr.Body;
-            var (ctx1, start_val) = Visit(ctx, start);
+            var (ctx2, start_val) = Visit(ctx1, start);
+            _builder.BuildStore(start_val, ctx1.Get(var_name).Value);
             var preheader_bb = _builder.InsertBlock;
             var the_function = preheader_bb.Parent;
             var loop_bb = the_function.AppendBasicBlock("loop");
             _builder.BuildBr(loop_bb);
             _builder.PositionAtEnd(loop_bb);
-            var variable = _builder.BuildPhi(LLVMTypeRef.Double, var_name);
-            variable.AddIncoming(new[] { start_val }, new[] { preheader_bb }, 1u);
-            var ctx2 = ctx1.Add(var_name, variable);
             Visit(ctx2, body);
+            var variable = _builder.BuildLoad(ctx2.Get(var_name).Value, var_name);
             var (ctx3, step_val) = step is not null ? Visit(ctx2, step) : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
             var next_var = _builder.BuildFAdd(variable, step_val, "nextvar");
+            _builder.BuildStore(next_var, ctx3.Get(var_name).Value);
             var (ctx4, end_cond) = Visit(ctx3, end_);
             var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
             var end_cond2 = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, end_cond, zero, "loopcond");
@@ -190,7 +204,6 @@ namespace Kaleidoscope
             var after_bb = the_function.AppendBasicBlock("afterloop");
             _builder.BuildCondBr(end_cond2, loop_bb, after_bb);
             _builder.PositionAtEnd(after_bb);
-            variable.AddIncoming(new[] { next_var }, new[] { loop_end_bb }, 1u);
             return (ctx, zero);
         }
 
@@ -200,8 +213,7 @@ namespace Kaleidoscope
                 _functions[expr.Proto.Name] = expr;
 
             var (ctxn, tf) = Visit(ctx, expr.Proto);
-            var bb = tf.AppendBasicBlock("entry");
-            _builder.PositionAtEnd(bb);
+
             var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
             _builder.BuildRet(returnVal);
             _passManager.RunFunctionPassManager(tf);
@@ -275,7 +287,19 @@ namespace Kaleidoscope
                 f.Linkage = LLVMLinkage.LLVMExternalLinkage;
             }
 
-            return (ctx.AddArguments(f, args), f);
+            var bb = f.AppendBasicBlock("entry");
+            _builder.PositionAtEnd(bb);
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                var n = args[i];
+                var param = f.GetParam((uint)i);
+                param.Name = n;
+                ctx = ctx.Add(n, _builder);
+                _builder.BuildStore(param, ctx.Get(n).Value);
+            }
+
+            return (ctx, f);
         }
 
         public (Context, LLVMValueRef) VisitVariable(Context ctx, VariableExpression expr)
@@ -285,7 +309,7 @@ namespace Kaleidoscope
             if (value is null)
                 throw new InvalidOperationException("variable not bound");
 
-            return (ctx, value.GetValueOrDefault());
+            return (ctx, _builder.BuildLoad(value.GetValueOrDefault(), expr.Name));
         }
 
         public (Context, LLVMValueRef) VisitUnary(Context ctx, UnaryExpression expr)
@@ -293,6 +317,19 @@ namespace Kaleidoscope
             var functionName = "unary_" + expr.Operator.Value as string;
             var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Operand });
             return Visit(ctx, callExpr);
+        }
+
+        public (Context, LLVMValueRef) VisitVarInExpression(Context ctx, VarInExpression expr)
+        {
+            if (expr.Value is not null)
+            {
+                var (ctx1, value) = Visit(ctx, expr.Value);
+                var ctx2 = ctx1.Add(expr.Name, _builder);
+                _builder.BuildStore(value, ctx2.Get(expr.Name).Value);
+                return Visit(ctx2, expr.Body);
+            }
+            var ctxn = ctx.Add(expr.Name, _builder);
+            return Visit(ctxn, expr.Body);
         }
     }
 }

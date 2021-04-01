@@ -10,9 +10,9 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Kaleidoscope/bin/Debug/net5.0/fedora.33-x64/Kaleidoscope.dll",
+            "program": "${workspaceFolder}/Kaleidoscope.Chapter7/bin/Debug/net5.0/fedora.33-x64/Kaleidoscope.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/Kaleidoscope",
+            "cwd": "${workspaceFolder}/Kaleidoscope.Chapter7",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "externalTerminal",
             "stopAtEntry": false
