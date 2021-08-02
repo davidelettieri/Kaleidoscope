@@ -87,6 +87,8 @@ namespace Kaleidoscope
                 ctx = ctxn;
             }
 
+            _module.Dump();
+
             foreach (var v in toRun)
             {
                 var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());
