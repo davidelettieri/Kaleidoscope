@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kaleidoscope", "Kaleidoscope.Chapter6\Kaleidoscope.csproj", "{D150E0CC-A8F8-4579-8E72-5997A5C4E0C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kaleidoscope.Chapter6", "Kaleidoscope.Chapter6\Kaleidoscope.Chapter6.csproj", "{D150E0CC-A8F8-4579-8E72-5997A5C4E0C1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kaleidoscope", "Kaleidoscope.Chapter7\Kaleidoscope.csproj", "{D866DF86-FCB3-4F18-A3C5-D2A28BE3C694}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kaleidoscope.Chapter7", "Kaleidoscope.Chapter7\Kaleidoscope.Chapter7.csproj", "{D866DF86-FCB3-4F18-A3C5-D2A28BE3C694}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
