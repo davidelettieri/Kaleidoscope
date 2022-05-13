@@ -36,7 +36,7 @@ namespace Kaleidoscope
                 return p;
             }
 
-            if (token.Type == TokenType.IDENTIFIER && _customOperatorsPrecedence.TryGetValue(token.Value.ToString(), out var cp))
+            if (token.Type == IDENTIFIER && _customOperatorsPrecedence.TryGetValue(token.Value.ToString(), out var cp))
             {
                 return cp;
             }

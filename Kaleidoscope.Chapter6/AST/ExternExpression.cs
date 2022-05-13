@@ -4,8 +4,8 @@ namespace Kaleidoscope.AST
     {
         public ExternExpression(PrototypeExpression proto)
         {
-            this.Proto = proto;
-            this.NodeType = ExpressionType.Extern;
+            Proto = proto;
+            NodeType = ExpressionType.Extern;
         }
 
         public PrototypeExpression Proto { get; private set; }

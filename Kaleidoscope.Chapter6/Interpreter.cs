@@ -124,7 +124,7 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitBinary(Context ctx, BinaryExpression expr)
         {
-            if (expr.NodeType == ExpressionType.BinaryOperator)
+            if (expr.NodeType == BinaryOperator)
             {
                 var functionName = "binary_" + expr.OperatorToken.Value as string;
                 var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Lhs, expr.Rhs });

@@ -129,13 +129,13 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitBinary(Context ctx, BinaryExpression expr)
         {
-            if (expr.NodeType == ExpressionType.BinaryOperator)
+            if (expr.NodeType == BinaryOperator)
             {
                 var functionName = "binary_" + expr.OperatorToken.Value as string;
                 var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Lhs, expr.Rhs });
                 return Visit(ctx, callExpr);
             }
-            else if (expr.NodeType == ExpressionType.Assign)
+            else if (expr.NodeType == Assign)
             {
                 if (expr.Lhs is VariableExpression ve)
                 {
@@ -215,6 +215,18 @@ namespace Kaleidoscope
                 _functions[expr.Proto.Name] = expr;
 
             var (ctxn, tf) = Visit(ctx, expr.Proto);
+            
+            var bb = tf.AppendBasicBlock("entry");
+            _builder.PositionAtEnd(bb);
+            
+            for (int i = 0; i < expr.Proto.Arguments.Count; i++)
+            {
+                var n = expr.Proto.Arguments[i];
+                var param = tf.GetParam((uint)i);
+                param.Name = n;
+                ctxn = ctxn.Add(n, _builder);
+                _builder.BuildStore(param, ctxn.Get(n).Value);
+            }
 
             var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
             _builder.BuildRet(returnVal);
@@ -287,18 +299,6 @@ namespace Kaleidoscope
                 var ft = LLVMTypeRef.CreateFunction(retType, doubles, false);
                 f = _module.AddFunction(name, ft);
                 f.Linkage = LLVMLinkage.LLVMExternalLinkage;
-            }
-
-            var bb = f.AppendBasicBlock("entry");
-            _builder.PositionAtEnd(bb);
-
-            for (int i = 0; i < args.Count; i++)
-            {
-                var n = args[i];
-                var param = f.GetParam((uint)i);
-                param.Name = n;
-                ctx = ctx.Add(n, _builder);
-                _builder.BuildStore(param, ctx.Get(n).Value);
             }
 
             return (ctx, f);

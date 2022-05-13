@@ -4,8 +4,8 @@
     {
         public VariableExpression(string name)
         {
-            this.Name = name;
-            this.NodeType = ExpressionType.Variable;
+            Name = name;
+            NodeType = ExpressionType.Variable;
         }
 
         public string Name { get; private set; }

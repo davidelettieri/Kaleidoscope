@@ -4,8 +4,8 @@
     {
         public NumberExpression(double value)
         {
-            this.Value = value;
-            this.NodeType = ExpressionType.Number;
+            Value = value;
+            NodeType = ExpressionType.Number;
         }
 
         public double Value { get; private set; }

@@ -4,9 +4,9 @@
     {
         public FunctionExpression(PrototypeExpression proto, Expression body)
         {
-            this.Proto = proto;
-            this.Body = body;
-            this.NodeType = ExpressionType.Function;
+            Proto = proto;
+            Body = body;
+            NodeType = ExpressionType.Function;
         }
 
         public PrototypeExpression Proto { get; private set; }

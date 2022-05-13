@@ -4,10 +4,10 @@
     {
         public IfExpression(Expression condition, Expression then, Expression @else)
         {
-            this.Condition = condition;
-            this.Then = then;
-            this.Else = @else;
-            this.NodeType = ExpressionType.If;
+            Condition = condition;
+            Then = then;
+            Else = @else;
+            NodeType = ExpressionType.If;
         }
 
         public Expression Condition { get; private set; }

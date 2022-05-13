@@ -6,7 +6,7 @@ namespace Kaleidoscope.AST
     {
         public UnaryOperatorExpression(string name, List<string> args) : base("unary_" + name, args)
         {
-            this.NodeType = ExpressionType.UnaryOperator;
+            NodeType = ExpressionType.UnaryOperator;
         }
 
         public string Argument { get => Arguments[0]; }

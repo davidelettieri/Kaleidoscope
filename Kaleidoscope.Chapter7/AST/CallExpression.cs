@@ -6,9 +6,9 @@
     {
         public CallExpression(string callee, List<Expression> args)
         {
-            this.Callee = callee;
-            this.Arguments = args;
-            this.NodeType = ExpressionType.Call;
+            Callee = callee;
+            Arguments = args;
+            NodeType = ExpressionType.Call;
         }
 
         public string Callee { get; private set; }

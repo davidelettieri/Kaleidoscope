@@ -4,12 +4,12 @@
     {
         public ForExpression(string varName, Expression start, Expression end, Expression step, Expression body)
         {
-            this.VarName = varName;
-            this.Start = start;
-            this.End = end;
-            this.Step = step;
-            this.Body = body;
-            this.NodeType = ExpressionType.For;
+            VarName = varName;
+            Start = start;
+            End = end;
+            Step = step;
+            Body = body;
+            NodeType = ExpressionType.For;
         }
 
         public string VarName { get; private set; }
