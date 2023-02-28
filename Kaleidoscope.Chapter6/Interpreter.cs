@@ -160,7 +160,9 @@ namespace Kaleidoscope
                 throw new InvalidOperationException("incorrect number of arguments passed");
 
             var argsValues = expr.Arguments.Select(p => Visit(ctx, p).Item2).ToArray();
-            return (ctx, _builder.BuildCall(func, argsValues, "calltmp"));
+            var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double,
+                Enumerable.Repeat(LLVMTypeRef.Double, expr.Arguments.Count).ToArray());
+            return (ctx, _builder.BuildCall2(funcType, func, argsValues, "calltmp"));
         }
 
         public (Context, LLVMValueRef) VisitFor(Context ctx, ForExpression expr)
