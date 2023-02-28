@@ -236,7 +236,7 @@ namespace Kaleidoscope
 
             var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
             _builder.BuildRet(returnVal);
-            // _passManager.RunFunctionPassManager(tf);
+            _passManager.RunFunctionPassManager(tf);
             return (ctxn2, tf);
         }
 
