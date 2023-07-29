@@ -12,17 +12,17 @@
             NodeType = ExpressionType.For;
         }
 
-        public string VarName { get; private set; }
+        public string VarName { get; }
 
-        public Expression Start { get; private set; }
+        public Expression Start { get; }
 
-        public Expression End { get; private set; }
+        public Expression End { get; }
 
-        public Expression? Step { get; private set; }
+        public Expression? Step { get; }
 
-        public Expression Body { get; private set; }
+        public Expression Body { get; }
 
-        public override ExpressionType NodeType { get; protected set; }
+        public ExpressionType NodeType { get; }
 
         public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

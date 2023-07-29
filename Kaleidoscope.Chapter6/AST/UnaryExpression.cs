@@ -4,6 +4,8 @@ namespace Kaleidoscope.AST
     {
         public Token Operator { get; }
         public Expression Operand { get; }
+        public ExpressionType NodeType { get; }
+
         public UnaryExpression(Token @operator, Expression operand)
         {
             Operator = @operator;
@@ -11,7 +13,6 @@ namespace Kaleidoscope.AST
             NodeType = ExpressionType.Unary;
         }
 
-        public override ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

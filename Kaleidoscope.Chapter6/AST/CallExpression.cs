@@ -11,11 +11,11 @@
             NodeType = ExpressionType.Call;
         }
 
-        public string Callee { get; private set; }
+        public string Callee { get; }
 
-        public List<Expression> Arguments { get; private set; }
+        public List<Expression> Arguments { get; }
 
-        public override ExpressionType NodeType { get; protected set; }
+        public ExpressionType NodeType { get; }
 
         public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

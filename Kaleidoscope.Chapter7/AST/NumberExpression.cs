@@ -5,12 +5,9 @@
         public NumberExpression(double value)
         {
             Value = value;
-            NodeType = ExpressionType.Number;
         }
 
         public double Value { get; private set; }
-
-        public override ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

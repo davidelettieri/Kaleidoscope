@@ -13,7 +13,7 @@
 
         public string Name { get; }
         public List<string> Arguments { get; }
-        public override ExpressionType NodeType { get; protected set; }
+        public virtual ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

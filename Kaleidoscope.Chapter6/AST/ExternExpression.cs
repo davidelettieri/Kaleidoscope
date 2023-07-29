@@ -8,9 +8,9 @@ namespace Kaleidoscope.AST
             NodeType = ExpressionType.Extern;
         }
 
-        public PrototypeExpression Proto { get; private set; }
+        public PrototypeExpression Proto { get; }
 
-        public override ExpressionType NodeType { get; protected set; }
+        public ExpressionType NodeType { get; }
 
         public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

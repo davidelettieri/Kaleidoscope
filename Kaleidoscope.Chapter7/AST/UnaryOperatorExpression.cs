@@ -6,11 +6,7 @@ namespace Kaleidoscope.AST
     {
         public UnaryOperatorExpression(string name, List<string> args) : base("unary_" + name, args)
         {
-            NodeType = ExpressionType.UnaryOperator;
         }
-
-        public string Argument { get => Arguments[0]; }
-        public override ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

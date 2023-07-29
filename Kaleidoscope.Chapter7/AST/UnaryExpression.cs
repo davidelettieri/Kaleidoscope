@@ -8,10 +8,8 @@ namespace Kaleidoscope.AST
         {
             Operator = @operator;
             Operand = operand;
-            NodeType = ExpressionType.Unary;
         }
 
-        public override ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

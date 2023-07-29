@@ -36,7 +36,7 @@
         public Expression Lhs { get; }
         public Expression Rhs { get; }
         public Token OperatorToken { get; }
-        public override ExpressionType NodeType { get; protected set; }
+        public ExpressionType NodeType { get; }
 
         public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {

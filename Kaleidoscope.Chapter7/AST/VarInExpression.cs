@@ -12,7 +12,6 @@ namespace Kaleidoscope.AST
         public string Name { get; }
         public Expression? Value { get; }
         public Expression Body { get; }
-        public override ExpressionType NodeType { get; protected set; }
 
         public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
