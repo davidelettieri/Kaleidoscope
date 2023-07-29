@@ -1,15 +1,12 @@
-﻿using LLVMSharp;
-using System;
+﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Kaleidoscope
 {
     class Program
     {
-        private static readonly Interpreter _interpreter = new Interpreter();
-        private static readonly Parser _parser = new Parser();
+        private static readonly Interpreter Interpreter = new();
+        private static readonly Parser Parser = new();
         static void Main(string[] args)
         {
             if (args.Length == 1)
@@ -18,7 +15,7 @@ namespace Kaleidoscope
             }
             else
             {
-                RunREPL();
+                RunRepl();
             }
 
         }
@@ -29,7 +26,7 @@ namespace Kaleidoscope
             Run(source);
         }
 
-        static void RunREPL()
+        static void RunRepl()
         {
             while (true)
             {
@@ -49,11 +46,11 @@ namespace Kaleidoscope
         {
             var scanner = new Scanner(source);
             var tokens = scanner.ScanTokens();
-            var ast = _parser.Parse(tokens);
+            var ast = Parser.Parse(tokens);
 
             if (ast is not null)
             {
-                _interpreter.Run(ast);
+                Interpreter.Run(ast);
             }
         }
     }

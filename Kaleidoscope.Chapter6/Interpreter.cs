@@ -11,7 +11,7 @@ namespace Kaleidoscope
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Print(double d);
 
-    public class Interpreter : ExpressionVisitor<(Context, LLVMValueRef), Context>
+    public class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Context>
     {
         private LLVMModuleRef _module;
         private LLVMBuilderRef _builder;
@@ -57,7 +57,7 @@ namespace Kaleidoscope
             // here we can also use _module.CreateInterpreter() which is slower but slightly simpler to handle
             _engine = _module.CreateMCJITCompiler();
 
-            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, new[] { LLVMTypeRef.Double }, false);
+            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, new[] { LLVMTypeRef.Double });
             var write = _module.AddFunction("putchard", ft);
             write.Linkage = LLVMLinkage.LLVMExternalLinkage;
             Delegate d = new Print(PutChard);
@@ -76,7 +76,7 @@ namespace Kaleidoscope
             foreach (var item in exprs)
             {
                 var ctx = new Context();
-                var (ctxn, v) = Visit(ctx, item);
+                var (_, v) = Visit(ctx, item);
 
                 // Since we could have several expression to be evaluated we need to complete the emission of all
                 // the code before running any of them, we keep track of what we need to run and the execute later in order
@@ -84,7 +84,6 @@ namespace Kaleidoscope
                 {
                     toRun.Add(v);
                 }
-                ctx = ctxn;
             }
 
             foreach (var v in toRun)
@@ -104,18 +103,18 @@ namespace Kaleidoscope
             return body.Accept(this, ctx);
         }
 
-        private LLVMValueRef BinaryVal(LLVMValueRef lhs_val, LLVMValueRef rhs_val, ExpressionType nodeType)
+        private LLVMValueRef BinaryVal(LLVMValueRef lhsVal, LLVMValueRef rhsVal, ExpressionType nodeType)
         {
             switch (nodeType)
             {
                 case Add:
-                    return _builder.BuildFAdd(lhs_val, rhs_val, "addtmp");
+                    return _builder.BuildFAdd(lhsVal, rhsVal, "addtmp");
                 case Subtract:
-                    return _builder.BuildFSub(lhs_val, rhs_val, "addtmp");
+                    return _builder.BuildFSub(lhsVal, rhsVal, "addtmp");
                 case Multiply:
-                    return _builder.BuildFMul(lhs_val, rhs_val, "addtmp");
+                    return _builder.BuildFMul(lhsVal, rhsVal, "addtmp");
                 case LessThan:
-                    var i = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhs_val, rhs_val, "cmptmp");
+                    var i = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhsVal, rhsVal, "cmptmp");
                     return _builder.BuildUIToFP(i, LLVMTypeRef.Double, "booltmp");
                 default:
                     throw new InvalidOperationException();
@@ -126,14 +125,14 @@ namespace Kaleidoscope
         {
             if (expr.NodeType == BinaryOperator)
             {
-                var functionName = "binary_" + expr.OperatorToken.Value as string;
+                var functionName = "binary_" + expr.OperatorToken.Value;
                 var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Lhs, expr.Rhs });
                 return Visit(ctx, callExpr);
             }
 
-            var (ctxl, lhs_val) = Visit(ctx, expr.Lhs);
-            var (ctxr, rhs_val) = Visit(ctxl, expr.Rhs);
-            return (ctxr, BinaryVal(lhs_val, rhs_val, expr.NodeType));
+            var (lhsCtx, lhsVal) = Visit(ctx, expr.Lhs);
+            var (rhsCtx, rhsVal) = Visit(lhsCtx, expr.Rhs);
+            return (rhsCtx, BinaryVal(lhsVal, rhsVal, expr.NodeType));
         }
 
         public (Context, LLVMValueRef) VisitCall(Context ctx, CallExpression expr)
@@ -167,31 +166,31 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitFor(Context ctx, ForExpression expr)
         {
-            var var_name = expr.VarName;
+            var varName = expr.VarName;
             var start = expr.Start;
-            var end_ = expr.End;
+            var end = expr.End;
             var step = expr.Step;
             var body = expr.Body;
-            var (ctx1, start_val) = Visit(ctx, start);
-            var preheader_bb = _builder.InsertBlock;
-            var the_function = preheader_bb.Parent;
-            var loop_bb = the_function.AppendBasicBlock("loop");
-            _builder.BuildBr(loop_bb);
-            _builder.PositionAtEnd(loop_bb);
-            var variable = _builder.BuildPhi(LLVMTypeRef.Double, var_name);
-            variable.AddIncoming(new[] { start_val }, new[] { preheader_bb }, 1u);
-            var ctx2 = ctx1.Add(var_name, variable);
+            var (ctx1, startVal) = Visit(ctx, start);
+            var preHeaderBb = _builder.InsertBlock;
+            var theFunction = preHeaderBb.Parent;
+            var loopBb = theFunction.AppendBasicBlock("loop");
+            _builder.BuildBr(loopBb);
+            _builder.PositionAtEnd(loopBb);
+            var variable = _builder.BuildPhi(LLVMTypeRef.Double, varName);
+            variable.AddIncoming(new[] { startVal }, new[] { preHeaderBb }, 1u);
+            var ctx2 = ctx1.Add(varName, variable);
             Visit(ctx2, body);
-            var (ctx3, step_val) = step is not null ? Visit(ctx2, step) : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
-            var next_var = _builder.BuildFAdd(variable, step_val, "nextvar");
-            var (ctx4, end_cond) = Visit(ctx3, end_);
+            var (ctx3, stepVal) = step is not null ? Visit(ctx2, step) : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
+            var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
+            var (_, endCond) = Visit(ctx3, end);
             var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
-            var end_cond2 = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, end_cond, zero, "loopcond");
-            var loop_end_bb = _builder.InsertBlock;
-            var after_bb = the_function.AppendBasicBlock("afterloop");
-            _builder.BuildCondBr(end_cond2, loop_bb, after_bb);
-            _builder.PositionAtEnd(after_bb);
-            variable.AddIncoming(new[] { next_var }, new[] { loop_end_bb }, 1u);
+            var endCond2 = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, endCond, zero, "loopcond");
+            var loopEndBb = _builder.InsertBlock;
+            var afterBb = theFunction.AppendBasicBlock("afterloop");
+            _builder.BuildCondBr(endCond2, loopBb, afterBb);
+            _builder.PositionAtEnd(afterBb);
+            variable.AddIncoming(new[] { nextVar }, new[] { loopEndBb }, 1u);
             return (ctx, zero);
         }
 
@@ -217,33 +216,33 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitIf(Context ctx, IfExpression expr)
         {
-            var _cond = expr.Condition;
-            var _then = expr.Then;
-            var _else = expr.Else;
-            var (_, cond) = Visit(ctx, _cond);
+            var exprCondition = expr.Condition;
+            var exprThen = expr.Then;
+            var exprElse = expr.Else;
+            var (_, cond) = Visit(ctx, exprCondition);
             var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
-            var cond_val = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, cond, zero, "ifcond");
-            var startBB = _builder.InsertBlock;
-            var the_function = startBB.Parent;
-            var then_bb = the_function.AppendBasicBlock("then");
-            var else_bb = the_function.AppendBasicBlock("else");
-            var merge_bb = the_function.AppendBasicBlock("ifcont");
-            _builder.BuildCondBr(cond_val, then_bb, else_bb);
-            _builder.PositionAtEnd(then_bb);
-            var (_, then_val) = Visit(ctx, _then);
-            then_bb = _builder.InsertBlock;
-            _builder.PositionAtEnd(else_bb);
-            var (_, else_val) = Visit(ctx, _else);
-            else_bb = _builder.InsertBlock;
-            _builder.PositionAtEnd(merge_bb);
+            var condVal = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, cond, zero, "ifcond");
+            var startBb = _builder.InsertBlock;
+            var theFunction = startBb.Parent;
+            var thenBb = theFunction.AppendBasicBlock("then");
+            var elseBb = theFunction.AppendBasicBlock("else");
+            var mergeBb = theFunction.AppendBasicBlock("ifcont");
+            _builder.BuildCondBr(condVal, thenBb, elseBb);
+            _builder.PositionAtEnd(thenBb);
+            var (_, thenVal) = Visit(ctx, exprThen);
+            thenBb = _builder.InsertBlock;
+            _builder.PositionAtEnd(elseBb);
+            var (_, elseVal) = Visit(ctx, exprElse);
+            elseBb = _builder.InsertBlock;
+            _builder.PositionAtEnd(mergeBb);
             var phi = _builder.BuildPhi(LLVMTypeRef.Double, "iftmp");
-            phi.AddIncoming(new[] { then_val }, new[] { then_bb }, 1u);
-            phi.AddIncoming(new[] { else_val }, new[] { else_bb }, 1u);
-            _builder.PositionAtEnd(then_bb);
-            _builder.BuildBr(merge_bb);
-            _builder.PositionAtEnd(else_bb);
-            _builder.BuildBr(merge_bb);
-            _builder.PositionAtEnd(merge_bb);
+            phi.AddIncoming(new[] { thenVal }, new[] { thenBb }, 1u);
+            phi.AddIncoming(new[] { elseVal }, new[] { elseBb }, 1u);
+            _builder.PositionAtEnd(thenBb);
+            _builder.BuildBr(mergeBb);
+            _builder.PositionAtEnd(elseBb);
+            _builder.BuildBr(mergeBb);
+            _builder.PositionAtEnd(mergeBb);
             return (ctx, phi);
         }
 
@@ -271,7 +270,7 @@ namespace Kaleidoscope
             else
             {
                 var retType = LLVMTypeRef.Double;
-                var ft = LLVMTypeRef.CreateFunction(retType, doubles, false);
+                var ft = LLVMTypeRef.CreateFunction(retType, doubles);
                 f = _module.AddFunction(name, ft);
                 f.Linkage = LLVMLinkage.LLVMExternalLinkage;
             }
@@ -291,7 +290,7 @@ namespace Kaleidoscope
 
         public (Context, LLVMValueRef) VisitUnary(Context ctx, UnaryExpression expr)
         {
-            var functionName = "unary_" + expr.Operator.Value as string;
+            var functionName = "unary_" + expr.Operator.Value;
             var callExpr = new CallExpression(functionName, new List<Expression>() { expr.Operand });
             return Visit(ctx, callExpr);
         }

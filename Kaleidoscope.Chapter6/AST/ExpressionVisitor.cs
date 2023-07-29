@@ -1,6 +1,6 @@
 ﻿namespace Kaleidoscope.AST
 {
-    public interface ExpressionVisitor<TResult, TContext>
+    public interface IExpressionVisitor<out TResult, in TContext>
     {
         TResult VisitBinary(TContext ctx, BinaryExpression expr);
         TResult VisitCall(TContext ctx, CallExpression expr);

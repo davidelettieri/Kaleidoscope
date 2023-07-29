@@ -2,7 +2,7 @@
 {
     public sealed class ForExpression : Expression
     {
-        public ForExpression(string varName, Expression start, Expression end, Expression step, Expression body)
+        public ForExpression(string varName, Expression start, Expression end, Expression? step, Expression body)
         {
             VarName = varName;
             Start = start;
@@ -18,13 +18,13 @@
 
         public Expression End { get; private set; }
 
-        public Expression Step { get; private set; }
+        public Expression? Step { get; private set; }
 
         public Expression Body { get; private set; }
 
         public override ExpressionType NodeType { get; protected set; }
 
-        public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
+        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
             return visitor.VisitFor(ctx, this);
         }

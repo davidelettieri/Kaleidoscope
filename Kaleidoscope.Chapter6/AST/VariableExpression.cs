@@ -12,7 +12,7 @@
 
         public override ExpressionType NodeType { get; protected set; }
 
-        public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
+        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
         {
             return visitor.VisitVariable(ctx, this);
         }

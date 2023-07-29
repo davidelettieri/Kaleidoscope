@@ -5,9 +5,9 @@ namespace Kaleidoscope
         public TokenType Type { get; }
         public string Lexeme { get; }
         public int Line { get; }
-        public object Value { get; }
+        public object? Value { get; }
 
-        public Token(TokenType type, string lexeme, int line, object value = null)
+        public Token(TokenType type, string lexeme, int line, object? value = null)
         {
             Type = type;
             Lexeme = lexeme;

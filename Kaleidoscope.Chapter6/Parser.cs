@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Kaleidoscope.AST;
 using static Kaleidoscope.TokenType;
 
@@ -15,18 +16,19 @@ namespace Kaleidoscope
 
     public sealed class Parser
     {
-        private List<Token> _tokens;
+        private List<Token>? _tokens;
+
         private readonly Dictionary<string, double> _binaryOperatorPrecedence =
-            new Dictionary<string, double>()
+            new()
             {
-                { "<", 10 },
-                { "+", 20 },
-                { "-", 20 },
-                { "*", 40 },
+                {"<", 10},
+                {"+", 20},
+                {"-", 20},
+                {"*", 40},
             };
 
-        private readonly Dictionary<string, double> _customOperatorsPrecedence = new Dictionary<string, double>();
-        private readonly HashSet<string> _unaryOperators = new HashSet<string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, double> _customOperatorsPrecedence = new();
+        private readonly HashSet<string> _unaryOperators = new(StringComparer.Ordinal);
 
 
         private double GetPrecedence(Token token)
@@ -36,7 +38,8 @@ namespace Kaleidoscope
                 return p;
             }
 
-            if (token.Type == IDENTIFIER && _customOperatorsPrecedence.TryGetValue(token.Value.ToString(), out var cp))
+            if (token is {Type: IDENTIFIER, Value: not null} &&
+                _customOperatorsPrecedence.TryGetValue(token.Value.ToString()!, out var cp))
             {
                 return cp;
             }
@@ -44,9 +47,10 @@ namespace Kaleidoscope
             return 0;
         }
 
-        private int _current = 0;
+        private int _current;
 
-        public List<Expression> Parse(List<Token> tokens)
+        [MemberNotNull(nameof(_tokens))]
+        public List<Expression>? Parse(List<Token> tokens)
         {
             _current = 0;
             _tokens = tokens;
@@ -80,7 +84,6 @@ namespace Kaleidoscope
             var expr = Expression();
 
             return new FunctionExpression(new PrototypeExpression("anon_expr", new List<string>()), expr);
-
         }
 
         private Expression Expression(double precedence = 0)
@@ -113,7 +116,9 @@ namespace Kaleidoscope
         private Expression Unary()
         {
             var next = Peek();
-            if (_unaryOperators.Contains(next.Value?.ToString()))
+            var value = next.Value?.ToString();
+            if (!string.IsNullOrWhiteSpace(value) &&
+                _unaryOperators.Contains(value))
             {
                 var @operator = Advance();
                 var operand = Unary();
@@ -135,6 +140,12 @@ namespace Kaleidoscope
             if (Match(IDENTIFIER))
             {
                 var name = Previous().Value as string;
+
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new ParseError("Identifier name cannot be empty");
+                }
+
                 if (Match(LEFT_PAREN))
                     return Call(name);
                 return new VariableExpression(name);
@@ -142,7 +153,12 @@ namespace Kaleidoscope
 
             if (Match(NUMBER))
             {
-                return new NumberExpression((double)Previous().Value);
+                if (Previous().Value is double value)
+                {
+                    return new NumberExpression(value);
+                }
+
+                throw new ParseError("Number value has to be double");
             }
 
             if (Match(IF))
@@ -167,7 +183,7 @@ namespace Kaleidoscope
             var start = Expression();
             Consume(COMMA, "Expect ',' after initial value");
             var end = Expression();
-            Expression step = null;
+            Expression? step = null;
             if (Check(COMMA))
             {
                 Consume(COMMA, "");
@@ -201,8 +217,7 @@ namespace Kaleidoscope
                 {
                     var arg = Expression();
                     args.Add(arg);
-                }
-                while (Match(COMMA));
+                } while (Match(COMMA));
             }
 
             Consume(RIGHT_PAREN, "Expected ')'");
@@ -246,7 +261,15 @@ namespace Kaleidoscope
             if (prototypeType == PrototypeType.Binary)
             {
                 Consume(NUMBER, "Expected number after operator identifier.");
-                precedence = (double)Previous().Value;
+
+                if (Previous().Value is double value)
+                {
+                    precedence = value;
+                }
+                else
+                {
+                    throw new ParseError("Number value has to be double");
+                }
             }
 
             Consume(LEFT_PAREN, "Expected '('.");
@@ -258,8 +281,7 @@ namespace Kaleidoscope
                 {
                     var arg = Identifier();
                     args.Add(arg);
-                }
-                while (Match(COMMA));
+                } while (Match(COMMA));
             }
 
             Consume(RIGHT_PAREN, "Expected ')'.");
@@ -293,7 +315,13 @@ namespace Kaleidoscope
         private string Identifier()
         {
             var token = Consume(IDENTIFIER, "Expect identifier.");
-            return token.Value as string;
+
+            if (token.Value is string value)
+            {
+                return value;
+            }
+
+            throw new ParseError("Identifier value has to be a string");
         }
 
         private bool Match(params TokenType[] types)
@@ -327,13 +355,6 @@ namespace Kaleidoscope
             return Peek().Type == type;
         }
 
-        private bool CheckNext(TokenType tokenType)
-        {
-            if (IsAtEnd()) return false;
-            if (_tokens[_current + 1].Type == EOF) return false;
-            return _tokens[_current + 1].Type == tokenType;
-        }
-
         private Token Advance()
         {
             if (!IsAtEnd()) _current++;
@@ -342,13 +363,8 @@ namespace Kaleidoscope
         }
 
         private bool IsAtEnd() => Peek().Type == EOF;
-        private Token Peek() => _tokens[_current];
-        private Token Previous() => _tokens[_current - 1];
-        private double PeekPrecedence()
-        {
-            var next = Peek();
-            return _binaryOperatorPrecedence.TryGetValue(next.Lexeme, out var value) ? value : -1;
-        }
+        private Token Peek() => _tokens![_current];
+        private Token Previous() => _tokens![_current - 1];
 
         private void Syncronize()
         {

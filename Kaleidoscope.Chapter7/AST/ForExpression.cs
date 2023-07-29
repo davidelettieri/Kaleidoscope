@@ -2,7 +2,7 @@
 {
     public sealed class ForExpression : Expression
     {
-        public ForExpression(string varName, Expression start, Expression end, Expression step, Expression body)
+        public ForExpression(string varName, Expression start, Expression end, Expression? step, Expression body)
         {
             VarName = varName;
             Start = start;
@@ -18,7 +18,7 @@
 
         public Expression End { get; private set; }
 
-        public Expression Step { get; private set; }
+        public Expression? Step { get; private set; }
 
         public Expression Body { get; private set; }
 

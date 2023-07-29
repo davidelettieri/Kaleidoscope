@@ -2,7 +2,7 @@ namespace Kaleidoscope.AST
 {
     public sealed class VarInExpression : Expression
     {
-        public VarInExpression(string name, Expression value, Expression body)
+        public VarInExpression(string name, Expression? value, Expression body)
         {
             Name = name;
             Value = value;
@@ -10,7 +10,7 @@ namespace Kaleidoscope.AST
         }
 
         public string Name { get; }
-        public Expression Value { get; }
+        public Expression? Value { get; }
         public Expression Body { get; }
         public override ExpressionType NodeType { get; protected set; }
 
