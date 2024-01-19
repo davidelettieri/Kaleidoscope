@@ -57,7 +57,7 @@ namespace Kaleidoscope
             // here we can also use _module.CreateInterpreter() which is slower but slightly simpler to handle
             _engine = _module.CreateMCJITCompiler();
 
-            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, new[] {LLVMTypeRef.Double});
+            var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, [LLVMTypeRef.Double]);
             var write = _module.AddFunction("putchard", ft);
             write.Linkage = LLVMLinkage.LLVMExternalLinkage;
             Delegate d = new Print(PutChard);
@@ -131,7 +131,7 @@ namespace Kaleidoscope
             if (expr.NodeType == BinaryOperator)
             {
                 var functionName = "binary_" + expr.OperatorToken.Value;
-                var callExpr = new CallExpression(functionName, new List<Expression>() {expr.Lhs, expr.Rhs});
+                var callExpr = new CallExpression(functionName, [expr.Lhs, expr.Rhs]);
                 return Visit(ctx, callExpr);
             }
             else if (expr.NodeType == Assign)
@@ -349,7 +349,7 @@ namespace Kaleidoscope
         public (Context, LLVMValueRef) VisitUnary(Context ctx, UnaryExpression expr)
         {
             var functionName = "unary_" + expr.Operator.Value;
-            var callExpr = new CallExpression(functionName, new List<Expression>() {expr.Operand});
+            var callExpr = new CallExpression(functionName, [expr.Operand]);
             return Visit(ctx, callExpr);
         }
 
