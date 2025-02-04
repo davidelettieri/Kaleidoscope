@@ -6,15 +6,23 @@
     <Platforms>AnyCPU;x86</Platforms>
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
     <RootNamespace>Kaleidoscope</RootNamespace>
-    <LangVersion>12</LangVersion>
+    <LangVersion>default</LangVersion>
     <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LLVMSharp" Version="16.0.0" />
+    <PackageReference Include="LLVMSharp" Version="18.1.0-rc1.8895972383" />
   </ItemGroup>
 
   <ItemGroup>

@@ -46,13 +46,17 @@ namespace Kaleidoscope
             _module = LLVMModuleRef.CreateWithName("Kaleidoscope Module");
             _builder = _module.Context.CreateBuilder();
             _passManager = _module.CreateFunctionPassManager();
-            _passManager.AddBasicAliasAnalysisPass();
-            _passManager.AddPromoteMemoryToRegisterPass();
-            _passManager.AddInstructionCombiningPass();
-            _passManager.AddReassociatePass();
-            _passManager.AddGVNPass();
-            _passManager.AddCFGSimplificationPass();
             _passManager.InitializeFunctionPassManager();
+            //
+            // _passManager.AddBasicAliasAnalysisPass();
+            // _passManager.AddPromoteMemoryToRegisterPass();
+            // _passManager.AddInstructionCombiningPass();
+            // _passManager.AddReassociatePass();
+            // _passManager.AddGVNPass();
+            // _passManager.AddCFGSimplificationPass();
+            // //
+            //
+            // _passManager.InitializeFunctionPassManager();
 
             // here we can also use _module.CreateInterpreter() which is slower but slightly simpler to handle
             _engine = _module.CreateMCJITCompiler();
@@ -68,7 +72,7 @@ namespace Kaleidoscope
         public void Run(List<Expression> exprs)
         {
             // If we modify the module after we already executed some function with
-            // _engine.RunFunction it will broke so for each run we instantiate the module again
+            // _engine.RunFunction it will brake so for each run we instantiate the module again
             // any previous defined function will be emitted again in the current module
 
             InitializeModule();
@@ -79,12 +83,18 @@ namespace Kaleidoscope
                 var (_, v) = Visit(ctx, item);
 
                 // Since we could have several expression to be evaluated we need to complete the emission of all
-                // the code before running any of them, we keep track of what we need to run and the execute later in order
-                if (item is FunctionExpression f && f.Proto?.Name == "anon_expr")
+                // the code before running any of them, we keep track of what we need to run and then execute later in order
+                if (item is FunctionExpression { Proto.Name: "anon_expr" })
                 {
                     toRun.Add(v);
                 }
             }
+            
+            _module.Dump();
+            //
+            // _passManager.Run(_module);
+            //
+            // _module.Dump();
 
             foreach (var v in toRun)
             {
@@ -154,7 +164,7 @@ namespace Kaleidoscope
                 }
             }
 
-            var funcParams = func.Params;
+            var funcParams = func.GetParams();
             if (expr.Arguments.Count != funcParams.Length)
                 throw new InvalidOperationException("incorrect number of arguments passed");
 
@@ -181,7 +191,9 @@ namespace Kaleidoscope
             variable.AddIncoming(new[] { startVal }, new[] { preHeaderBb }, 1u);
             var ctx2 = ctx1.Add(varName, variable);
             Visit(ctx2, body);
-            var (ctx3, stepVal) = step is not null ? Visit(ctx2, step) : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
+            var (ctx3, stepVal) = step is not null
+                ? Visit(ctx2, step)
+                : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
             var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
             var (_, endCond) = Visit(ctx3, end);
             var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);

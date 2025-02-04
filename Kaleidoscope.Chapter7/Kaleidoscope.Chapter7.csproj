@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LLVMSharp" Version="16.0.0" />
+    <PackageReference Include="LLVMSharp" Version="18.1.0-rc1.8895972383" />
   </ItemGroup>
 
   <ItemGroup>

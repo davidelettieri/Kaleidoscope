@@ -68,7 +68,7 @@ namespace Kaleidoscope
         public void Run(List<Expression> exprs)
         {
             // If we modify the module after we already executed some function with
-            // _engine.RunFunction it will broke so for each run we instantiate the module again
+            // _engine.RunFunction it will brake so for each run we instantiate the module again
             // any previous defined function will be emitted again in the current module
 
             InitializeModule();
@@ -79,7 +79,7 @@ namespace Kaleidoscope
                 var (_, v) = Visit(ctx, item);
 
                 // Since we could have several expression to be evaluated we need to complete the emission of all
-                // the code before running any of them, we keep track of what we need to run and the execute later in order
+                // the code before running any of them, we keep track of what we need to run and then execute later in order
                 if (item is FunctionExpression {Proto.Name: "anon_expr"})
                 {
                     toRun.Add(v);
@@ -177,7 +177,7 @@ namespace Kaleidoscope
                 }
             }
 
-            var funcParams = func.Params;
+            var funcParams = func.GetParams();
             if (expr.Arguments.Count != funcParams.Length)
                 throw new InvalidOperationException("incorrect number of arguments passed");
 
