@@ -11,12 +11,12 @@ namespace Kaleidoscope
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Print(double d);
 
-    public class Interpreter : ExpressionVisitor<(Context, LLVMValueRef), Context>
+    public unsafe class Interpreter : ExpressionVisitor<(Context, LLVMValueRef), Context>
     {
         private LLVMModuleRef _module;
         private LLVMBuilderRef _builder;
-        private LLVMPassManagerRef _passManager;
         private LLVMExecutionEngineRef _engine;
+        private LLVMOpaquePassBuilderOptions* _passBuilderOptions;
         private readonly Dictionary<string, Expression> _functions;
 
         private void PutChard(double x)
@@ -45,14 +45,7 @@ namespace Kaleidoscope
         {
             _module = LLVMModuleRef.CreateWithName("Kaleidoscope Module");
             _builder = _module.Context.CreateBuilder();
-            _passManager = _module.CreateFunctionPassManager();
-            _passManager.AddBasicAliasAnalysisPass();
-            _passManager.AddPromoteMemoryToRegisterPass();
-            _passManager.AddInstructionCombiningPass();
-            _passManager.AddReassociatePass();
-            _passManager.AddGVNPass();
-            _passManager.AddCFGSimplificationPass();
-            _passManager.InitializeFunctionPassManager();
+            _passBuilderOptions = LLVM.CreatePassBuilderOptions();
 
             // here we can also use _module.CreateInterpreter() which is slower but slightly simpler to handle
             _engine = _module.CreateMCJITCompiler();
@@ -86,7 +79,16 @@ namespace Kaleidoscope
                 }
             }
 
-            _module.Dump();
+            var passes = new MarshaledString("mem2reg,instcombine,reassociate,gvn,simplifycfg");
+            var passesError = LLVM.RunPasses(_module, passes, _engine.TargetMachine, _passBuilderOptions);
+
+            if (passesError != null)
+            {
+                sbyte* errorMessage = LLVM.GetErrorMessage(passesError);
+                var span = MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)errorMessage);
+                Console.WriteLine(span.AsString());
+                return;
+            }
 
             foreach (var v in toRun)
             {
@@ -95,7 +97,7 @@ namespace Kaleidoscope
                 Console.WriteLine("> {0}", fres);
             }
 
-            _passManager.Dispose();
+            LLVM.DisposePassBuilderOptions(_passBuilderOptions);
             _builder.Dispose();
             _module.Dispose();
         }
@@ -262,7 +264,6 @@ namespace Kaleidoscope
 
             var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
             _builder.BuildRet(returnVal);
-            _passManager.RunFunctionPassManager(tf);
             return (ctxn2, tf);
         }
 
