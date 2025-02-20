@@ -61,7 +61,7 @@ namespace Kaleidoscope
         public void Run(List<Expression> exprs)
         {
             // If we modify the module after we already executed some function with
-            // _engine.RunFunction it will brake so for each run we instantiate the module again
+            // _engine.RunFunction it will break so for each run we instantiate the module again
             // any previous defined function will be emitted again in the current module
 
             InitializeModule();
