@@ -11,12 +11,12 @@ namespace Kaleidoscope
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void Print(double d);
 
-    public class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Context>
+    public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Context>
     {
         private LLVMModuleRef _module;
         private LLVMBuilderRef _builder;
-        private LLVMPassManagerRef _passManager;
         private LLVMExecutionEngineRef _engine;
+        private LLVMOpaquePassBuilderOptions* _passBuilderOptions;
         private readonly Dictionary<string, Expression> _functions;
 
         private void PutChard(double x)
@@ -45,14 +45,7 @@ namespace Kaleidoscope
         {
             _module = LLVMModuleRef.CreateWithName("Kaleidoscope Module");
             _builder = _module.Context.CreateBuilder();
-            _passManager = _module.CreateFunctionPassManager();
-            _passManager.AddBasicAliasAnalysisPass();
-            _passManager.AddPromoteMemoryToRegisterPass();
-            _passManager.AddInstructionCombiningPass();
-            _passManager.AddReassociatePass();
-            _passManager.AddGVNPass();
-            _passManager.AddCFGSimplificationPass();
-            _passManager.InitializeFunctionPassManager();
+            _passBuilderOptions = LLVM.CreatePassBuilderOptions();
 
             // here we can also use _module.CreateInterpreter() which is slower but slightly simpler to handle
             _engine = _module.CreateMCJITCompiler();
@@ -68,7 +61,7 @@ namespace Kaleidoscope
         public void Run(List<Expression> exprs)
         {
             // If we modify the module after we already executed some function with
-            // _engine.RunFunction it will broke so for each run we instantiate the module again
+            // _engine.RunFunction it will break so for each run we instantiate the module again
             // any previous defined function will be emitted again in the current module
 
             InitializeModule();
@@ -79,13 +72,24 @@ namespace Kaleidoscope
                 var (_, v) = Visit(ctx, item);
 
                 // Since we could have several expression to be evaluated we need to complete the emission of all
-                // the code before running any of them, we keep track of what we need to run and the execute later in order
-                if (item is FunctionExpression f && f.Proto?.Name == "anon_expr")
+                // the code before running any of them, we keep track of what we need to run and then execute later in order
+                if (item is FunctionExpression { Proto.Name: "anon_expr" })
                 {
                     toRun.Add(v);
                 }
             }
 
+            var passes = new MarshaledString("mem2reg,instcombine,reassociate,gvn,simplifycfg");
+            var passesError = LLVM.RunPasses(_module, passes, _engine.TargetMachine, _passBuilderOptions);
+
+            if (passesError != null)
+            {
+                sbyte* errorMessage = LLVM.GetErrorMessage(passesError);
+                var span = MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)errorMessage);
+                Console.WriteLine(span.AsString());
+                return;
+            }
+            
             foreach (var v in toRun)
             {
                 var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());
@@ -93,7 +97,7 @@ namespace Kaleidoscope
                 Console.WriteLine("> {0}", fres);
             }
 
-            _passManager.Dispose();
+            LLVM.DisposePassBuilderOptions(_passBuilderOptions);
             _builder.Dispose();
             _module.Dispose();
         }
@@ -154,7 +158,7 @@ namespace Kaleidoscope
                 }
             }
 
-            var funcParams = func.Params;
+            var funcParams = func.GetParams();
             if (expr.Arguments.Count != funcParams.Length)
                 throw new InvalidOperationException("incorrect number of arguments passed");
 
@@ -181,7 +185,9 @@ namespace Kaleidoscope
             variable.AddIncoming(new[] { startVal }, new[] { preHeaderBb }, 1u);
             var ctx2 = ctx1.Add(varName, variable);
             Visit(ctx2, body);
-            var (ctx3, stepVal) = step is not null ? Visit(ctx2, step) : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
+            var (ctx3, stepVal) = step is not null
+                ? Visit(ctx2, step)
+                : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
             var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
             var (_, endCond) = Visit(ctx3, end);
             var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
@@ -204,7 +210,6 @@ namespace Kaleidoscope
             _builder.PositionAtEnd(bb);
             var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
             _builder.BuildRet(returnVal);
-            _passManager.RunFunctionPassManager(tf);
             return (ctxn2, tf);
         }
 
