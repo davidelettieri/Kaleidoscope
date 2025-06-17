@@ -32,12 +32,9 @@ namespace Kaleidoscope
 
         public Interpreter()
         {
-            LLVM.LinkInMCJIT();
-            LLVM.InitializeX86TargetMC();
-            LLVM.InitializeX86Target();
-            LLVM.InitializeX86TargetInfo();
-            LLVM.InitializeX86AsmParser();
-            LLVM.InitializeX86AsmPrinter();
+            LLVM.InitializeNativeTarget();
+            LLVM.InitializeNativeAsmPrinter();
+            LLVM.InitializeNativeAsmParser();
             _functions = new Dictionary<string, Expression>();
         }
 
@@ -61,7 +58,7 @@ namespace Kaleidoscope
         public void Run(List<Expression> exprs)
         {
             // If we modify the module after we already executed some function with
-            // _engine.RunFunction it will break so for each run we instantiate the module again
+            // _engine.RunFunction it will break, so for each run we instantiate the module again
             // any previous defined function will be emitted again in the current module
 
             InitializeModule();
@@ -71,7 +68,7 @@ namespace Kaleidoscope
                 var ctx = new Context();
                 var (_, v) = Visit(ctx, item);
 
-                // Since we could have several expression to be evaluated we need to complete the emission of all
+                // Since we could have several expressions to be evaluated, we need to complete the emission of all
                 // the code before running any of them, we keep track of what we need to run and then execute later in order
                 if (item is FunctionExpression { Proto.Name: "anon_expr" })
                 {
