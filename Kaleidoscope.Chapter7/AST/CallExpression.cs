@@ -8,8 +8,5 @@ public sealed class CallExpression(string callee, List<Expression> args) : Expre
     public List<Expression> Arguments { get; } = args;
 
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitCall(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitCall(ctx, this);
 }

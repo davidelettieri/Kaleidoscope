@@ -44,8 +44,5 @@ public sealed class BinaryExpression : Expression
     public Token OperatorToken { get; }
     public ExpressionType NodeType { get; }
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitBinary(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitBinary(ctx, this);
 }

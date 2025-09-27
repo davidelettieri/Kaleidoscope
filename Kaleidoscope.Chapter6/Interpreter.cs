@@ -44,7 +44,6 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         _builder = _module.Context.CreateBuilder();
         _passBuilderOptions = LLVM.CreatePassBuilderOptions();
 
-        // here we can also use _module.CreateInterpreter() which is slower but slightly simpler to handle
         _engine = _module.CreateMCJITCompiler();
 
         var ft = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double, [LLVMTypeRef.Double]);
@@ -99,10 +98,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         _module.Dispose();
     }
 
-    private (Context, LLVMValueRef) Visit(Context ctx, Expression body)
-    {
-        return body.Accept(this, ctx);
-    }
+    private (Context, LLVMValueRef) Visit(Context ctx, Expression body) => body.Accept(this, ctx);
 
     private LLVMValueRef BinaryVal(LLVMValueRef lhsVal, LLVMValueRef rhsVal, ExpressionType nodeType)
     {
@@ -248,10 +244,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         return (ctx, phi);
     }
 
-    public (Context, LLVMValueRef) VisitNumber(Context ctx, NumberExpression expr)
-    {
-        return (ctx, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, expr.Value));
-    }
+    public (Context, LLVMValueRef) VisitNumber(Context ctx, NumberExpression expr) => (ctx, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, expr.Value));
 
     public (Context, LLVMValueRef) VisitPrototype(Context ctx, PrototypeExpression expr)
     {

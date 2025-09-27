@@ -7,8 +7,5 @@ public sealed class IfExpression(Expression condition, Expression then, Expressi
     public Expression Else { get; } = @else;
 
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitIf(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitIf(ctx, this);
 }

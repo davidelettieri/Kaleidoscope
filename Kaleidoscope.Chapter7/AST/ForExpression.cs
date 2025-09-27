@@ -9,8 +9,5 @@ public sealed class ForExpression(string varName, Expression start, Expression e
     public Expression Body { get; } = body;
 
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitFor(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitFor(ctx, this);
 }

@@ -4,8 +4,5 @@ public sealed class NumberExpression(double value) : Expression
 {
     public double Value { get; } = value;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitNumber(ctx,this);
-    }
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitNumber(ctx, this);
 }

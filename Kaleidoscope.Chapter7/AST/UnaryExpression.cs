@@ -5,8 +5,5 @@ public sealed class UnaryExpression(Token @operator, Expression operand) : Expre
     public Token Operator { get; } = @operator;
     public Expression Operand { get; } = operand;
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitUnary(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitUnary(ctx, this);
 }

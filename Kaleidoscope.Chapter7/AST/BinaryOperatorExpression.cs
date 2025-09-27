@@ -6,8 +6,5 @@ public sealed class BinaryOperatorExpression(string name, double precedence, Lis
 {
     public double Precedence { get; } = precedence;
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitPrototype(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitPrototype(ctx, this);
 }

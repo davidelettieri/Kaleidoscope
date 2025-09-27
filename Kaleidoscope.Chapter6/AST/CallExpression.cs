@@ -10,8 +10,5 @@ public sealed class CallExpression(string callee, List<Expression> args) : Expre
 
     public ExpressionType NodeType { get; } = ExpressionType.Call;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitCall(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitCall(ctx, this);
 }

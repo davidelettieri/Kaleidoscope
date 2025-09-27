@@ -4,8 +4,5 @@ public sealed class ExternExpression(PrototypeExpression proto) : Expression
 {
     public PrototypeExpression Proto { get; } = proto;
 
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-    {
-        return visitor.VisitExtern(ctx, this);
-    }
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitExtern(ctx, this);
 }
