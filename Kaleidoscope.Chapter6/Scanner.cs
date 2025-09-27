@@ -46,6 +46,13 @@ public sealed class Scanner(string source)
 
         switch (c)
         {
+            case ' ':
+            case '\r':
+            case '\t':
+                break;
+            case '\n':
+                _line++;
+                break;
             case '(':
                 AddToken(LEFT_PAREN);
                 break;
@@ -129,29 +136,6 @@ public sealed class Scanner(string source)
         if (_current + 1 >= _source.Length) return '\0';
 
         return _source[_current + 1];
-    }
-
-    void SkipWhitespace()
-    {
-        while (true)
-        {
-            var c = Peek();
-
-            switch (c)
-            {
-                case ' ':
-                case '\r':
-                case '\t':
-                    Advance();
-                    break;
-                case '\n':
-                    _line++;
-                    Advance();
-                    break;
-                default:
-                    return;
-            }
-        }
     }
 
     private bool IsDigit(char c) => char.IsDigit(c);
