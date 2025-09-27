@@ -1,4 +1,4 @@
-﻿namespace Kaleidoscope.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
 public enum ExpressionType
 {
@@ -16,5 +16,8 @@ public enum ExpressionType
     Extern,
     BinaryOperator,
     UnaryOperator,
-    Unary
+    Unary,
+    VariableDefinition,
+    Equal,
+    Assign
 }

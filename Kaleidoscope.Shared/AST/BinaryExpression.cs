@@ -1,5 +1,6 @@
-﻿namespace Kaleidoscope.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
+using Kaleidoscope.Shared;
 using System;
 
 public sealed class BinaryExpression : Expression

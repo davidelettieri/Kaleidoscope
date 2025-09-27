@@ -1,4 +1,4 @@
-namespace Kaleidoscope.AST;
+namespace Kaleidoscope.Shared.AST;
 
 public sealed class VariableExpression(string name) : Expression
 {

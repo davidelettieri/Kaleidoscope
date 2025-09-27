@@ -1,4 +1,4 @@
-namespace Kaleidoscope;
+namespace Kaleidoscope.Shared;
 
 public class Token(TokenType type, string lexeme, int line, object? value = null)
 {

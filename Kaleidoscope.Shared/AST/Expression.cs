@@ -1,4 +1,4 @@
-﻿namespace Kaleidoscope.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
 public abstract class Expression
 {

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Kaleidoscope.Shared.AST;
 using System.Diagnostics.CodeAnalysis;
-using Kaleidoscope.AST;
-using static Kaleidoscope.TokenType;
+using static Kaleidoscope.Shared.TokenType;
 
-namespace Kaleidoscope;
+namespace Kaleidoscope.Shared;
 
 class ParseError(string message) : Exception(message)
 {

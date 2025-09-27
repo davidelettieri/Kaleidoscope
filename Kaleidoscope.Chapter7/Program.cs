@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kaleidoscope.Shared;
+using System;
 using System.IO;
 
 namespace Kaleidoscope;

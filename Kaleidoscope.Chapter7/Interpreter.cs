@@ -1,17 +1,17 @@
-﻿using System;
+﻿using Kaleidoscope.Shared.AST;
+using LLVMSharp.Interop;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Kaleidoscope.AST;
-using LLVMSharp.Interop;
-using static Kaleidoscope.AST.ExpressionType;
+using static Kaleidoscope.Shared.AST.ExpressionType;
 
 namespace Kaleidoscope;
 
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public delegate void Print(double d);
 
-public unsafe class Interpreter : ExpressionVisitor<(Context, LLVMValueRef), Context>
+public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Context>
 {
     private LLVMModuleRef _module;
     private LLVMBuilderRef _builder;

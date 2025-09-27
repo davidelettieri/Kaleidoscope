@@ -1,4 +1,4 @@
-﻿namespace Kaleidoscope;
+﻿namespace Kaleidoscope.Shared;
 
 public enum TokenType
 {
@@ -17,5 +17,12 @@ public enum TokenType
     COMMA,
     SEMICOLON,
     UNARY,
-    BINARY
+    BINARY,
+    VAR,
+    EQUAL,
+    EQUAL_EQUAL,
+    PLUS,
+    MINUS,
+    LESS,
+    STAR
 }

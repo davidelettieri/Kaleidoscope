@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Kaleidoscope.Shared.AST;
+using LLVMSharp.Interop;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Kaleidoscope.AST;
-using LLVMSharp.Interop;
-using static Kaleidoscope.AST.ExpressionType;
+using static Kaleidoscope.Shared.AST.ExpressionType;
 
 namespace Kaleidoscope;
 
@@ -289,4 +289,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         var callExpr = new CallExpression(functionName, [expr.Operand]);
         return Visit(ctx, callExpr);
     }
+
+    public (Context, LLVMValueRef) VisitVarInExpression(Context context, VarInExpression expr)
+        => throw new NotImplementedException();
 }

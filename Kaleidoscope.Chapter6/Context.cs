@@ -1,6 +1,6 @@
+using LLVMSharp.Interop;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using LLVMSharp.Interop;
 
 namespace Kaleidoscope;
 

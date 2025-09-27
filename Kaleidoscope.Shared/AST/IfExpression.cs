@@ -1,4 +1,4 @@
-namespace Kaleidoscope.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
 public sealed class IfExpression(Expression condition, Expression then, Expression @else) : Expression
 {
@@ -6,6 +6,5 @@ public sealed class IfExpression(Expression condition, Expression then, Expressi
     public Expression Then { get; } = then;
     public Expression Else { get; } = @else;
 
-
-    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitIf(ctx, this);
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitIf(ctx, this);
 }

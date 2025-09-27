@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
-using static Kaleidoscope.TokenType;
+﻿using System.Globalization;
+using static Kaleidoscope.Shared.TokenType;
 
-namespace Kaleidoscope;
+namespace Kaleidoscope.Shared;
 
 public sealed class Scanner(string source)
 {
