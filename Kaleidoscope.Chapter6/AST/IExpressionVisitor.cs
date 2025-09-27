@@ -1,6 +1,6 @@
 ﻿namespace Kaleidoscope.AST;
 
-public interface ExpressionVisitor<TResult, TContext>
+public interface IExpressionVisitor<out TResult, in TContext>
 {
     TResult VisitBinary(TContext ctx, BinaryExpression expr);
     TResult VisitCall(TContext ctx, CallExpression expr);
@@ -12,5 +12,4 @@ public interface ExpressionVisitor<TResult, TContext>
     TResult VisitVariable(TContext ctx, VariableExpression expr);
     TResult VisitExtern(TContext ctx, ExternExpression expr);
     TResult VisitUnary(TContext context, UnaryExpression expr);
-    TResult VisitVarInExpression(TContext context, VarInExpression expr);
 }

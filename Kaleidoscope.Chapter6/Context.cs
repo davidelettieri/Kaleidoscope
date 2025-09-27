@@ -2,49 +2,48 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using LLVMSharp.Interop;
 
-namespace Kaleidoscope
+namespace Kaleidoscope;
+
+public class Context
 {
-    public class Context
+    private readonly ImmutableDictionary<string, LLVMValueRef> _source;
+
+    public Context()
     {
-        private readonly ImmutableDictionary<string, LLVMValueRef> _source;
+        _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
+    }
 
-        public Context()
+    private Context(ImmutableDictionary<string, LLVMValueRef> source)
+    {
+        _source = source;
+    }
+
+    public Context Add(string key, LLVMValueRef value)
+        => new Context(_source.SetItem(key, value));
+
+    public Context AddArguments(LLVMValueRef function, List<string> arguments)
+    {
+        if (arguments.Count == 0)
+            return this;
+            
+        var s = _source;
+
+        for (int i = 0; i < arguments.Count; i++)
         {
-            _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
+            var name = arguments[i];
+            var param = function.GetParam((uint)i);
+            param.Name = name;
+            s = s.SetItem(name, param);
         }
 
-        private Context(ImmutableDictionary<string, LLVMValueRef> source)
-        {
-            _source = source;
-        }
+        return new Context(s);
+    }
 
-        public Context Add(string key, LLVMValueRef value)
-            => new Context(_source.SetItem(key, value));
+    public LLVMValueRef? Get(string key)
+    {
+        if (_source.TryGetValue(key, out var value))
+            return value;
 
-        public Context AddArguments(LLVMValueRef function, List<string> arguments)
-        {
-            if (arguments.Count == 0)
-                return this;
-                
-            var s = _source;
-
-            for (int i = 0; i < arguments.Count; i++)
-            {
-                var name = arguments[i];
-                var param = function.GetParam((uint)i);
-                param.Name = name;
-                s = s.SetItem(name, param);
-            }
-
-            return new Context(s);
-        }
-
-        public LLVMValueRef? Get(string key)
-        {
-            if (_source.TryGetValue(key, out var value))
-                return value;
-
-            return null;
-        }
+        return null;
     }
 }

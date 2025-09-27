@@ -1,19 +1,12 @@
-﻿namespace Kaleidoscope.AST
+﻿namespace Kaleidoscope.AST;
+
+public sealed class FunctionExpression(PrototypeExpression proto, Expression body) : Expression
 {
-    public sealed class FunctionExpression : Expression
+    public PrototypeExpression Proto { get; private set; } = proto;
+    public Expression Body { get; private set; } = body;
+
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
     {
-        public FunctionExpression(PrototypeExpression proto, Expression body)
-        {
-            Proto = proto;
-            Body = body;
-        }
-
-        public PrototypeExpression Proto { get; private set; }
-        public Expression Body { get; private set; }
-
-        public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitFunction(ctx, this);
-        }
+        return visitor.VisitFunction(ctx, this);
     }
 }

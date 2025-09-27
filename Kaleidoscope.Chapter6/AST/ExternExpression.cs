@@ -1,20 +1,13 @@
-namespace Kaleidoscope.AST
+namespace Kaleidoscope.AST;
+
+public sealed class ExternExpression(PrototypeExpression proto) : Expression
 {
-    public sealed class ExternExpression : Expression
+    public PrototypeExpression Proto { get; } = proto;
+
+    public ExpressionType NodeType { get; } = ExpressionType.Extern;
+
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
     {
-        public ExternExpression(PrototypeExpression proto)
-        {
-            Proto = proto;
-            NodeType = ExpressionType.Extern;
-        }
-
-        public PrototypeExpression Proto { get; }
-
-        public ExpressionType NodeType { get; }
-
-        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitExtern(ctx, this);
-        }
+        return visitor.VisitExtern(ctx, this);
     }
 }

@@ -1,16 +1,11 @@
 using System.Collections.Generic;
 
-namespace Kaleidoscope.AST
-{
-    public sealed class UnaryOperatorExpression : PrototypeExpression
-    {
-        public UnaryOperatorExpression(string name, List<string> args) : base("unary_" + name, args)
-        {
-        }
+namespace Kaleidoscope.AST;
 
-        public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitPrototype(ctx, this);
-        }
+public sealed class UnaryOperatorExpression(string name, List<string> args) : PrototypeExpression("unary_" + name, args)
+{
+    public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
+    {
+        return visitor.VisitPrototype(ctx, this);
     }
 }

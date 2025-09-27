@@ -1,7 +1,6 @@
-﻿namespace Kaleidoscope.AST
+﻿namespace Kaleidoscope.AST;
+
+public abstract class Expression
 {
-    public abstract class Expression
-    {
-        public abstract TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx);
-    }
+    public abstract TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx);
 }

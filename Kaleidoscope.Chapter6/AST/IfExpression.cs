@@ -1,21 +1,13 @@
-﻿namespace Kaleidoscope.AST
+﻿namespace Kaleidoscope.AST;
+
+public sealed class IfExpression(Expression condition, Expression then, Expression @else) : Expression
 {
-    public sealed class IfExpression : Expression
+    public Expression Condition { get; } = condition;
+    public Expression Then { get; } = then;
+    public Expression Else { get; } = @else;
+
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
     {
-        public IfExpression(Expression condition, Expression then, Expression @else)
-        {
-            Condition = condition;
-            Then = then;
-            Else = @else;
-        }
-
-        public Expression Condition { get; private set; }
-        public Expression Then { get; private set; }
-        public Expression Else { get; private set; }
-
-        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitIf(ctx, this);
-        }
+        return visitor.VisitIf(ctx, this);
     }
 }

@@ -1,17 +1,11 @@
-﻿namespace Kaleidoscope.AST
+﻿namespace Kaleidoscope.AST;
+
+public sealed class NumberExpression(double value) : Expression
 {
-    public sealed class NumberExpression : Expression
+    public double Value { get; private set; } = value;
+
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
     {
-        public NumberExpression(double value)
-        {
-            Value = value;
-        }
-
-        public double Value { get; private set; }
-
-        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitNumber(ctx,this);
-        }
+        return visitor.VisitNumber(ctx,this);
     }
 }

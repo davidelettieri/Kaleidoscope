@@ -1,29 +1,28 @@
-﻿namespace Kaleidoscope
+﻿namespace Kaleidoscope;
+
+public enum TokenType
 {
-    public enum TokenType
-    {
-        EOF,
-        DEF,
-        EXTERN,
-        IDENTIFIER,
-        NUMBER,
-        IF,
-        THEN,
-        ELSE,
-        FOR,
-        IN,
-        RIGHT_PAREN,
-        LEFT_PAREN,
-        COMMA,
-        SEMICOLON,
-        UNARY,
-        BINARY,
-        VAR,
-        EQUAL,
-        EQUAL_EQUAL,
-        PLUS,
-        MINUS,
-        LESS,
-        STAR
-    }
+    EOF,
+    DEF,
+    EXTERN,
+    IDENTIFIER,
+    NUMBER,
+    IF,
+    THEN,
+    ELSE,
+    FOR,
+    IN,
+    RIGHT_PAREN,
+    LEFT_PAREN,
+    COMMA,
+    SEMICOLON,
+    UNARY,
+    BINARY,
+    VAR,
+    EQUAL,
+    EQUAL_EQUAL,
+    PLUS,
+    MINUS,
+    LESS,
+    STAR
 }

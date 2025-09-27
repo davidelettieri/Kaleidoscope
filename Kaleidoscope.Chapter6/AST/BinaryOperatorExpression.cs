@@ -1,21 +1,14 @@
-namespace Kaleidoscope.AST
+namespace Kaleidoscope.AST;
+
+using System.Collections.Generic;
+
+public sealed class BinaryOperatorExpression(string name, double precedence, List<string> args) : PrototypeExpression("binary_" + name, args)
 {
-    using System.Collections.Generic;
+    public double Precedence { get; } = precedence;
+    public override ExpressionType NodeType { get; protected set; } = ExpressionType.BinaryOperator;
 
-    public sealed class BinaryOperatorExpression : PrototypeExpression
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
     {
-        public BinaryOperatorExpression(string name, double precedence, List<string> args) : base("binary_" + name, args)
-        {
-            Precedence = precedence;
-            NodeType = ExpressionType.BinaryOperator;
-        }
-
-        public double Precedence { get; }
-        public override ExpressionType NodeType { get; protected set; }
-
-        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitPrototype(ctx, this);
-        }
+        return visitor.VisitPrototype(ctx, this);
     }
 }

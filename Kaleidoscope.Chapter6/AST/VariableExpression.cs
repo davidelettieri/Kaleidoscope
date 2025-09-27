@@ -1,17 +1,11 @@
-﻿namespace Kaleidoscope.AST
+﻿namespace Kaleidoscope.AST;
+
+public sealed class VariableExpression(string name) : Expression
 {
-    public sealed class VariableExpression : Expression
+    public string Name { get; private set; } = name;
+
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
     {
-        public VariableExpression(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; private set; }
-
-        public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
-        {
-            return visitor.VisitVariable(ctx, this);
-        }
+        return visitor.VisitVariable(ctx, this);
     }
 }
