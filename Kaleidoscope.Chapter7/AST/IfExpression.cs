@@ -2,9 +2,9 @@ namespace Kaleidoscope.AST;
 
 public sealed class IfExpression(Expression condition, Expression then, Expression @else) : Expression
 {
-    public Expression Condition { get; private set; } = condition;
-    public Expression Then { get; private set; } = then;
-    public Expression Else { get; private set; } = @else;
+    public Expression Condition { get; } = condition;
+    public Expression Then { get; } = then;
+    public Expression Else { get; } = @else;
 
 
     public override TResult Accept<TResult, TContext>(ExpressionVisitor<TResult, TContext> visitor, TContext ctx)
