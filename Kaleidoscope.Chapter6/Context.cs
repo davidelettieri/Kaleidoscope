@@ -25,7 +25,7 @@ public class Context
     {
         if (arguments.Count == 0)
             return this;
-            
+
         var s = _source;
 
         for (int i = 0; i < arguments.Count; i++)

@@ -86,7 +86,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
             Console.WriteLine(span.AsString());
             return;
         }
-        
+
         foreach (var v in toRun)
         {
             var res = _engine.RunFunction(v, Array.Empty<LLVMGenericValueRef>());

@@ -2,7 +2,7 @@
 
 The Kaleidoscope tutorial implemented with C# and [LLVMSharp](https://github.com/microsoft/LLVMSharp).
 
-My implementation does not follow the official Kaleidoscope tutorial written in C++, other C# implementations can be found at [LLVMSharp](https://github.com/microsoft/LLVMSharp) and in [here](https://ice1000.org/llvm-cs/en/). 
+My implementation does not follow the official Kaleidoscope tutorial written in C++, other C# implementations can be found at [LLVMSharp](https://github.com/microsoft/LLVMSharp) and in [here](https://ice1000.org/llvm-cs/en/).
 
 Some useful resources are:
 * [Stephen Diehl haskell implementation](https://www.stephendiehl.com/llvm/)
