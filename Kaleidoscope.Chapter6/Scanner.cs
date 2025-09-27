@@ -39,7 +39,6 @@ public sealed class Scanner(string source)
 
     private void ScanToken()
     {
-        SkipWhitespace();
         _start = _current;
 
         char c = Advance();
