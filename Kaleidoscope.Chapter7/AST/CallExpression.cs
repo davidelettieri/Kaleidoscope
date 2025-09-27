@@ -1,4 +1,4 @@
-﻿namespace Kaleidoscope.AST;
+namespace Kaleidoscope.AST;
 
 using System.Collections.Generic;
 

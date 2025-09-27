@@ -1,4 +1,4 @@
-﻿namespace Kaleidoscope.AST;
+namespace Kaleidoscope.AST;
 
 public sealed class NumberExpression(double value) : Expression
 {
