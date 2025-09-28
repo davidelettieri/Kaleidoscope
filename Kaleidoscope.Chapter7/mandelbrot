@@ -28,7 +28,7 @@ def binary : 1 (x,y) y;
 
 def printdensity(d)
   if d > 8 then
-    putchard(32) 
+    putchard(32)
   else if d > 4 then
     putchard(46)
   else if d > 2 then

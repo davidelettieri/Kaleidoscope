@@ -1,0 +1,16 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="Kaleidoscope.Chapter6/Kaleidoscope.Chapter6.csproj">
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="Kaleidoscope.Chapter7/Kaleidoscope.Chapter7.csproj">
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="Kaleidoscope.Shared/Kaleidoscope.Shared.csproj" />
+</Solution>
