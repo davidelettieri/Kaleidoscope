@@ -5,34 +5,18 @@ public sealed class BinaryExpression : Expression
     public BinaryExpression(Token token, Expression lhs, Expression rhs)
     {
         OperatorToken = token;
-        switch (token.Lexeme)
+        NodeType = token.Lexeme switch
         {
-            case "+":
-                NodeType = ExpressionType.Add;
-                break;
-            case "-":
-                NodeType = ExpressionType.Subtract;
-                break;
-            case "*":
-                NodeType = ExpressionType.Multiply;
-                break;
-            case "<":
-                NodeType = ExpressionType.LessThan;
-                break;
-            case "==":
-                NodeType = ExpressionType.Equal;
-                break;
-            case "=":
-                NodeType = ExpressionType.Assign;
-                break;
-            default:
-                if (token.Type == TokenType.IDENTIFIER)
-                    NodeType = ExpressionType.BinaryOperator;
-                else
-                    throw new ArgumentException("op " + token.Type + " is not a valid operator");
-                break;
-        }
-
+            "+" => ExpressionType.Add,
+            "-" => ExpressionType.Subtract,
+            "*" => ExpressionType.Multiply,
+            "<" => ExpressionType.LessThan,
+            "==" => ExpressionType.Equal,
+            "=" => ExpressionType.Assign,
+            _ => token.Type == TokenType.IDENTIFIER
+                    ? ExpressionType.BinaryOperator
+                    : throw new ArgumentException($"op {token.Type} is not a valid operator")
+        };
         Lhs = lhs;
         Rhs = rhs;
     }
