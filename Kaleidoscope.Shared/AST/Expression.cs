@@ -1,6 +1,4 @@
-﻿using LLVMSharp.Interop;
-
-namespace Kaleidoscope.Shared.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
 public abstract class Expression
 {

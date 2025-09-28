@@ -1,6 +1,4 @@
-﻿using LLVMSharp.Interop;
-
-namespace Kaleidoscope.Shared.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
 public sealed class FunctionExpression(PrototypeExpression proto, Expression body) : Expression
 {

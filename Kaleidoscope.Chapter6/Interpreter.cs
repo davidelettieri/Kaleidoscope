@@ -1,6 +1,5 @@
 ﻿using Kaleidoscope.Shared;
 using Kaleidoscope.Shared.AST;
-using LLVMSharp.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;

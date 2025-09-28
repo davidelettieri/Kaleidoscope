@@ -1,6 +1,4 @@
-﻿using LLVMSharp.Interop;
-
-namespace Kaleidoscope.Shared.AST;
+﻿namespace Kaleidoscope.Shared.AST;
 
 public sealed class ForExpression(string varName, Expression start, Expression end, Expression? step, Expression body) : Expression
 {

@@ -1,5 +1,3 @@
-using LLVMSharp.Interop;
-
 namespace Kaleidoscope.Shared.AST;
 
 public sealed class UnaryOperatorExpression(string name, List<string> args) : PrototypeExpression("unary_" + name, args)

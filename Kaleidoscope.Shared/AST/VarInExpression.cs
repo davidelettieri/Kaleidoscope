@@ -1,5 +1,3 @@
-using LLVMSharp.Interop;
-
 namespace Kaleidoscope.Shared.AST;
 
 public sealed class VarInExpression(string name, Expression? value, Expression body) : Expression
