@@ -1,6 +1,5 @@
 ﻿using Kaleidoscope.Shared;
 using Kaleidoscope.Shared.AST;
-using LLVMSharp.Interop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +11,14 @@ namespace Kaleidoscope;
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public delegate void Print(double d);
 
-public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Context>
+public unsafe class Interpreter : IExpressionVisitor
 {
     private LLVMModuleRef _module;
     private LLVMBuilderRef _builder;
     private LLVMExecutionEngineRef _engine;
     private LLVMOpaquePassBuilderOptions* _passBuilderOptions;
     private readonly Dictionary<string, Expression> _functions;
+    private Context _context;
 
     private void PutChard(double x)
     {
@@ -37,6 +37,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         LLVM.InitializeNativeAsmPrinter();
         LLVM.InitializeNativeAsmParser();
         _functions = new Dictionary<string, Expression>();
+        _context = Context.Empty;
     }
 
     private void InitializeModule()
@@ -65,8 +66,8 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         var toRun = new List<LLVMValueRef>();
         foreach (var item in exprs)
         {
-            var ctx = new Context();
-            var (_, v) = Visit(ctx, item);
+            _context = Context.Empty;
+            var v = Visit(item);
 
             // Since we could have several expressions to be evaluated, we need to complete the emission of all
             // the code before running any of them, we keep track of what we need to run and then execute later in order
@@ -99,7 +100,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         _module.Dispose();
     }
 
-    private (Context, LLVMValueRef) Visit(Context ctx, Expression body) => body.Accept(this, ctx);
+    private LLVMValueRef Visit(Expression body) => body.Accept(this);
 
     private LLVMValueRef BinaryVal(LLVMValueRef lhsVal, LLVMValueRef rhsVal, ExpressionType nodeType)
     {
@@ -122,20 +123,20 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         }
     }
 
-    public (Context, LLVMValueRef) VisitBinary(Context ctx, BinaryExpression expr)
+    public LLVMValueRef VisitBinary(BinaryExpression expr)
     {
         if (expr.NodeType == BinaryOperator)
         {
             var functionName = "binary_" + expr.OperatorToken.Value;
             var callExpr = new CallExpression(functionName, [expr.Lhs, expr.Rhs]);
-            return Visit(ctx, callExpr);
+            return Visit(callExpr);
         }
         else if (expr.NodeType == Assign)
         {
             if (expr.Lhs is VariableExpression ve)
             {
-                var (varExprCtx, rhs) = Visit(ctx, expr.Rhs);
-                var value = ctx.Get(ve.Name);
+                var rhs = Visit(expr.Rhs);
+                var value = _context.Get(ve.Name);
 
                 if (value is null)
                 {
@@ -143,18 +144,18 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
                 }
 
                 _builder.BuildStore(rhs, value.Value);
-                return (varExprCtx, value.Value);
+                return value.Value;
             }
 
             throw new InvalidOperationException("Expected variable in lhs of assign operator");
         }
 
-        var (lhsCtx, lhsVal) = Visit(ctx, expr.Lhs);
-        var (rhsCtx, rhsVal) = Visit(lhsCtx, expr.Rhs);
-        return (rhsCtx, BinaryVal(lhsVal, rhsVal, expr.NodeType));
+        var lhsVal = Visit(expr.Lhs);
+        var rhsVal = Visit(expr.Rhs);
+        return BinaryVal(lhsVal, rhsVal, expr.NodeType);
     }
 
-    public (Context, LLVMValueRef) VisitCall(Context ctx, CallExpression expr)
+    public LLVMValueRef VisitCall(CallExpression expr)
     {
         var func = _module.GetNamedFunction(expr.Callee);
 
@@ -163,13 +164,13 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
             if (_functions.TryGetValue(expr.Callee, out var oldExpr))
             {
                 var pos = _builder.InsertBlock;
-                var (_, f) = Visit(ctx, oldExpr);
+                var f = Visit(oldExpr);
                 func = f;
                 _builder.PositionAtEnd(pos);
             }
             else
             {
-                return (ctx, null);
+                return null;
             }
         }
 
@@ -177,23 +178,24 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         if (expr.Arguments.Count != funcParams.Length)
             throw new InvalidOperationException("incorrect number of arguments passed");
 
-        var argsValues = expr.Arguments.Select(p => Visit(ctx, p).Item2).ToArray();
+        var argsValues = expr.Arguments.Select(Visit).ToArray();
         var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double,
             Enumerable.Repeat(LLVMTypeRef.Double, expr.Arguments.Count).ToArray());
-        return (ctx, _builder.BuildCall2(funcType, func, argsValues, "calltmp"));
+        return _builder.BuildCall2(funcType, func, argsValues, "calltmp");
     }
 
-    public (Context, LLVMValueRef) VisitFor(Context ctx, ForExpression expr)
+    public LLVMValueRef VisitFor(ForExpression expr)
     {
         var varName = expr.VarName;
         var value = _builder.BuildAlloca(LLVMTypeRef.Double, varName);
-        var ctx1 = ctx.Add(varName, value);
+        var originalContext = _context;
+        _context = _context.Add(varName, value);
         var start = expr.Start;
         var end = expr.End;
         var step = expr.Step;
         var body = expr.Body;
-        var (ctx2, startVal) = Visit(ctx1, start);
-        var varCtx1ValueRef = ctx1.Get(varName);
+        var startVal = Visit(start);
+        var varCtx1ValueRef = _context.Get(varName);
         if (varCtx1ValueRef is null)
         {
             throw new InvalidOperationException("Expected value for variable");
@@ -205,40 +207,40 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         var loopBb = theFunction.AppendBasicBlock("loop");
         _builder.BuildBr(loopBb);
         _builder.PositionAtEnd(loopBb);
-        Visit(ctx2, body);
-        var varCtx2ValueRef = ctx2.Get(varName);
+        Visit(body);
+        var varCtx2ValueRef = _context.Get(varName);
         if (varCtx2ValueRef is null)
         {
             throw new InvalidOperationException("Expected value for variable");
         }
 
         var variable = _builder.BuildLoad2(LLVMTypeRef.Double, varCtx2ValueRef.Value, varName);
-        var (ctx3, stepVal) = step is not null
-            ? Visit(ctx2, step)
-            : (ctx2, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1));
+        LLVMValueRef stepVal = step is not null ? Visit(step) : LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1);
         var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
-        var varCtx3ValueRef = ctx3.Get(varName);
+        var varCtx3ValueRef = _context.Get(varName);
         if (varCtx3ValueRef is null)
         {
             throw new InvalidOperationException("Expected value for variable");
         }
 
         _builder.BuildStore(nextVar, varCtx3ValueRef.Value);
-        var (_, endCond) = Visit(ctx3, end);
+        var endCond = Visit(end);
         var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
         var endCond2 = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, endCond, zero, "loopcond");
         var afterBb = theFunction.AppendBasicBlock("afterloop");
         _builder.BuildCondBr(endCond2, loopBb, afterBb);
         _builder.PositionAtEnd(afterBb);
-        return (ctx, zero);
+        _context = originalContext;
+        return zero;
     }
 
-    public (Context, LLVMValueRef) VisitFunction(Context ctx, FunctionExpression expr)
+    public LLVMValueRef VisitFunction(FunctionExpression expr)
     {
+        var originalContext = _context;
         if (!string.IsNullOrWhiteSpace(expr.Proto.Name))
             _functions[expr.Proto.Name] = expr;
 
-        var (ctxn, tf) = Visit(ctx, expr.Proto);
+        var tf = Visit(expr.Proto);
 
         var bb = tf.AppendBasicBlock("entry");
         _builder.PositionAtEnd(bb);
@@ -249,32 +251,31 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
             var param = tf.GetParam((uint)i);
             param.Name = n;
             var value = _builder.BuildAlloca(LLVMTypeRef.Double, n);
-            ctxn = ctxn.Add(n, value);
-            var nValueRef = ctxn.Get(n);
-            if (nValueRef is null)
-            {
-                throw new InvalidOperationException("Expected value for parameter");
-            }
-            _builder.BuildStore(param, nValueRef.Value);
+            _context = _context.Add(n, value);
+            _builder.BuildStore(param, value);
         }
 
-        var (ctxn2, returnVal) = Visit(ctxn, expr.Body);
+        var returnVal = Visit(expr.Body);
         _builder.BuildRet(returnVal);
-        return (ctxn2, tf);
+        _context = originalContext;
+        return tf;
     }
 
-    public (Context, LLVMValueRef) VisitExtern(Context ctx, ExternExpression expr)
+    public LLVMValueRef VisitExtern(ExternExpression expr)
     {
         _functions[expr.Proto.Name] = expr;
-        return Visit(ctx, expr.Proto);
+        var originalContext = _context;
+        var result = Visit(expr.Proto);
+        _context = originalContext;
+        return result;
     }
 
-    public (Context, LLVMValueRef) VisitIf(Context ctx, IfExpression expr)
+    public LLVMValueRef VisitIf(IfExpression expr)
     {
         var exprCondition = expr.Condition;
         var exprThen = expr.Then;
         var exprElse = expr.Else;
-        var (_, cond) = Visit(ctx, exprCondition);
+        var cond = Visit(exprCondition);
         var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
         var condVal = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, cond, zero, "ifcond");
         var startBb = _builder.InsertBlock;
@@ -284,10 +285,10 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         var mergeBb = theFunction.AppendBasicBlock("ifcont");
         _builder.BuildCondBr(condVal, thenBb, elseBb);
         _builder.PositionAtEnd(thenBb);
-        var (_, thenVal) = Visit(ctx, exprThen);
+        var thenVal = Visit(exprThen);
         thenBb = _builder.InsertBlock;
         _builder.PositionAtEnd(elseBb);
-        var (_, elseVal) = Visit(ctx, exprElse);
+        var elseVal = Visit(exprElse);
         elseBb = _builder.InsertBlock;
         _builder.PositionAtEnd(mergeBb);
         var phi = _builder.BuildPhi(LLVMTypeRef.Double, "iftmp");
@@ -298,12 +299,12 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         _builder.PositionAtEnd(elseBb);
         _builder.BuildBr(mergeBb);
         _builder.PositionAtEnd(mergeBb);
-        return (ctx, phi);
+        return phi;
     }
 
-    public (Context, LLVMValueRef) VisitNumber(Context ctx, NumberExpression expr) => (ctx, LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, expr.Value));
+    public LLVMValueRef VisitNumber(NumberExpression expr) => LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, expr.Value);
 
-    public (Context, LLVMValueRef) VisitPrototype(Context ctx, PrototypeExpression expr)
+    public LLVMValueRef VisitPrototype(PrototypeExpression expr)
     {
         var name = expr.Name;
         var args = expr.Arguments;
@@ -327,43 +328,40 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
             f.Linkage = LLVMLinkage.LLVMExternalLinkage;
         }
 
-        return (ctx, f);
+        return f;
     }
 
-    public (Context, LLVMValueRef) VisitVariable(Context ctx, VariableExpression expr)
+    public LLVMValueRef VisitVariable(VariableExpression expr)
     {
-        var value = ctx.Get(expr.Name);
+        var value = _context.Get(expr.Name);
 
         if (value is null)
             throw new InvalidOperationException("variable not bound");
 
-        return (ctx, _builder.BuildLoad2(LLVMTypeRef.Double, value.GetValueOrDefault(), expr.Name));
+        return _builder.BuildLoad2(LLVMTypeRef.Double, value.GetValueOrDefault(), expr.Name);
     }
 
-    public (Context, LLVMValueRef) VisitUnary(Context ctx, UnaryExpression expr)
+    public LLVMValueRef VisitUnary(UnaryExpression expr)
     {
         var functionName = "unary_" + expr.Operator.Value;
         var callExpr = new CallExpression(functionName, [expr.Operand]);
-        return Visit(ctx, callExpr);
+        return Visit(callExpr);
     }
 
-    public (Context, LLVMValueRef) VisitVarInExpression(Context ctx, VarInExpression expr)
+    public LLVMValueRef VisitVarInExpression(VarInExpression expr)
     {
+        var originalContext = _context;
+        var v = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
+        _context = _context.Add(expr.Name, v);
+
         if (expr.Value is not null)
         {
-            var (ctx1, value) = Visit(ctx, expr.Value);
-            var v1 = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
-            var ctx2 = ctx1.Add(expr.Name, v1);
-            var exprValueRef = ctx2.Get(expr.Name);
-            if (exprValueRef is null)
-            {
-                throw new InvalidOperationException("Expected value for var");
-            }
-            _builder.BuildStore(value, exprValueRef.Value);
-            return Visit(ctx2, expr.Body);
+            var value = Visit(expr.Value);
+            _builder.BuildStore(value, v);
         }
-        var v2 = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
-        var ctxn = ctx.Add(expr.Name, v2);
-        return Visit(ctxn, expr.Body);
+
+        var result = Visit(expr.Body);
+        _context = originalContext;
+        return result;
     }
 }

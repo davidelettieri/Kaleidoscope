@@ -1,5 +1,6 @@
 namespace Kaleidoscope.Shared.AST;
 
+using LLVMSharp.Interop;
 using System.Collections.Generic;
 
 public sealed class CallExpression(string callee, List<Expression> args) : Expression
@@ -10,5 +11,5 @@ public sealed class CallExpression(string callee, List<Expression> args) : Expre
 
     public ExpressionType NodeType { get; } = ExpressionType.Call;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitCall(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitCall(this);
 }

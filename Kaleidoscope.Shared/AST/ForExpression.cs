@@ -14,5 +14,5 @@ public sealed class ForExpression(string varName, Expression start, Expression e
 
     public ExpressionType NodeType { get; } = ExpressionType.For;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitFor(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitFor(this);
 }

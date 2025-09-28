@@ -5,5 +5,5 @@ public sealed class FunctionExpression(PrototypeExpression proto, Expression bod
     public PrototypeExpression Proto { get; } = proto;
     public Expression Body { get; } = body;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitFunction(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitFunction(this);
 }

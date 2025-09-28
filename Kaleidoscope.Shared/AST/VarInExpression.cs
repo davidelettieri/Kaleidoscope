@@ -6,5 +6,5 @@ public sealed class VarInExpression(string name, Expression? value, Expression b
     public Expression? Value { get; } = value;
     public Expression Body { get; } = body;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitVarInExpression(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitVarInExpression(this);
 }
