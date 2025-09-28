@@ -6,6 +6,5 @@ public sealed class NumberExpression(double value) : Expression
 {
     public double Value { get; } = value;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx)
-        => visitor.VisitNumber(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitNumber(this);
 }

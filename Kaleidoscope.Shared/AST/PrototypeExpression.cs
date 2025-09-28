@@ -9,5 +9,5 @@ public class PrototypeExpression(string name, List<string> args) : Expression
     public List<string> Arguments { get; } = args;
     public virtual ExpressionType NodeType { get; } = ExpressionType.Prototype;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitPrototype(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitPrototype(this);
 }

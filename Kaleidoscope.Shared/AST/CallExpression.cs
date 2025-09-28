@@ -11,5 +11,5 @@ public sealed class CallExpression(string callee, List<Expression> args) : Expre
 
     public ExpressionType NodeType { get; } = ExpressionType.Call;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitCall(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitCall(this);
 }

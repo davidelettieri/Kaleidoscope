@@ -7,5 +7,5 @@ public sealed class UnaryOperatorExpression(string name, List<string> args) : Pr
     public string Argument => Arguments[0];
     public override ExpressionType NodeType { get; } = ExpressionType.UnaryOperator;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitPrototype(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitPrototype(this);
 }

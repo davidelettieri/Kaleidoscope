@@ -8,5 +8,5 @@ public sealed class BinaryOperatorExpression(string name, double precedence, Lis
     public double Precedence { get; } = precedence;
     public override ExpressionType NodeType { get; } = ExpressionType.BinaryOperator;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitPrototype(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitPrototype(this);
 }

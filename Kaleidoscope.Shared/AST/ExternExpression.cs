@@ -8,5 +8,5 @@ public sealed class ExternExpression(PrototypeExpression proto) : Expression
 
     public ExpressionType NodeType { get; } = ExpressionType.Extern;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitExtern(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitExtern(this);
 }

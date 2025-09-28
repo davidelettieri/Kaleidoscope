@@ -28,6 +28,6 @@ public sealed class BinaryExpression : Expression
     public Token OperatorToken { get; }
     public ExpressionType NodeType { get; }
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx)
-        => visitor.VisitBinary(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor)
+        => visitor.VisitBinary(this);
 }

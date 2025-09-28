@@ -6,5 +6,5 @@ public sealed class VariableExpression(string name) : Expression
 {
     public string Name { get; } = name;
 
-    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitVariable(ctx, this);
+    public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitVariable(this);
 }
