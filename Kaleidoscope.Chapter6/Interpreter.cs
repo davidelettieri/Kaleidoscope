@@ -180,15 +180,7 @@ public unsafe class Interpreter : IExpressionVisitor
         var originalContext = _context;
         _context = _context.Add(varName, variable);
         Visit(body);
-        LLVMValueRef stepVal;
-        if (step is not null)
-        {
-            stepVal = Visit(step);
-        }
-        else
-        {
-            stepVal = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1);
-        }
+        LLVMValueRef stepVal = step is not null ? Visit(step) : LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1);
         var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
         var endCond = Visit(end);
         var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);

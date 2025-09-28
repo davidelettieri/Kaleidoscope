@@ -214,15 +214,7 @@ public unsafe class Interpreter : IExpressionVisitor
         }
 
         var variable = _builder.BuildLoad2(LLVMTypeRef.Double, varCtx2ValueRef.Value, varName);
-        LLVMValueRef stepVal;
-        if (step is not null)
-        {
-            stepVal = Visit(step);
-        }
-        else
-        {
-            stepVal = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1);
-        }
+        LLVMValueRef stepVal = step is not null ? Visit(step) : LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1);
         var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
         var varCtx3ValueRef = _context.Get(varName);
         if (varCtx3ValueRef is null)
