@@ -35,7 +35,6 @@ public sealed class Context
         return new Context(s);
     }
 
-
     public LLVMValueRef? Get(string key)
     {
         if (_source.TryGetValue(key, out var value))

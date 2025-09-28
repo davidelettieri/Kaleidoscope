@@ -4,10 +4,12 @@ using static Kaleidoscope.Shared.TokenType;
 
 namespace Kaleidoscope.Shared;
 
-class ParseError(string message) : Exception(message)
+class ParseError : Exception
 {
+    public ParseError(string message) : base(message)
+    {
+    }
 }
-
 
 public sealed class Parser
 {
@@ -16,15 +18,16 @@ public sealed class Parser
     private readonly Dictionary<string, double> _binaryOperatorPrecedence =
         new()
         {
+            {"=", 2},
             {"<", 10},
             {"+", 20},
             {"-", 20},
             {"*", 40},
+            {"==", 50},
         };
 
     private readonly Dictionary<string, double> _customOperatorsPrecedence = new();
     private readonly HashSet<string> _unaryOperators = new(StringComparer.Ordinal);
-
 
     private double GetPrecedence(Token token)
     {
@@ -75,14 +78,42 @@ public sealed class Parser
     {
         if (Match(DEF)) return Definition();
         if (Match(EXTERN)) return Extern();
-
         var expr = Expression();
 
         return new FunctionExpression(new PrototypeExpression("anon_expr", new List<string>()), expr);
     }
 
+    private Expression VarInExpression()
+    {
+        var variables = new List<(string, Expression?)>();
+
+        if (!Check(IN))
+        {
+            do
+            {
+                var id = Identifier();
+                Expression? value = null;
+                if (Match(EQUAL))
+                {
+                    value = Expression();
+                }
+
+                variables.Add((id, value));
+            } while (Match(COMMA));
+        }
+
+        Consume(IN, "Expected 'in' after variable declarations");
+
+        var body = Expression();
+        variables.Reverse();
+
+        return variables.Aggregate(body, (acc, c) => new VarInExpression(c.Item1, c.Item2, acc));
+    }
+
     private Expression Expression(double precedence = 0)
     {
+        if (Match(VAR)) return VarInExpression();
+
         var lhs = Unary();
 
         while (precedence < GetPrecedence())
@@ -111,9 +142,7 @@ public sealed class Parser
     private Expression Unary()
     {
         var next = Peek();
-        var value = next.Value?.ToString();
-        if (!string.IsNullOrWhiteSpace(value) &&
-            _unaryOperators.Contains(value))
+        if (next.Value is not null && _unaryOperators.Contains(next.Value.ToString()!))
         {
             var @operator = Advance();
             var operand = Unary();
@@ -138,7 +167,7 @@ public sealed class Parser
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new ParseError("Identifier name cannot be empty");
+                throw new ParseError("Value cannot be empty for Identifier");
             }
 
             if (Match(LEFT_PAREN))
@@ -153,7 +182,7 @@ public sealed class Parser
                 return new NumberExpression(value);
             }
 
-            throw new ParseError("Number value has to be double");
+            throw new ParseError("Number value must be double");
         }
 
         if (Match(IF))
@@ -256,14 +285,13 @@ public sealed class Parser
         if (prototypeType == PrototypeType.Binary)
         {
             Consume(NUMBER, "Expected number after operator identifier.");
-
             if (Previous().Value is double value)
             {
                 precedence = value;
             }
             else
             {
-                throw new ParseError("Number value has to be double");
+                throw new ParseError("Number value must be double");
             }
         }
 
@@ -310,13 +338,14 @@ public sealed class Parser
     private string Identifier()
     {
         var token = Consume(IDENTIFIER, "Expect identifier.");
+        var value = token.Value as string;
 
-        if (token.Value is string value)
+        if (string.IsNullOrWhiteSpace(value))
         {
-            return value;
+            throw new ParseError("Value cannot be empty for Identifier");
         }
 
-        throw new ParseError("Identifier value has to be a string");
+        return value;
     }
 
     private bool Match(params TokenType[] types)

@@ -1,8 +1,5 @@
 ﻿namespace Kaleidoscope.Shared.AST;
 
-using Kaleidoscope.Shared;
-using System;
-
 public sealed class BinaryExpression : Expression
 {
     public BinaryExpression(Token token, Expression lhs, Expression rhs)
@@ -22,6 +19,12 @@ public sealed class BinaryExpression : Expression
             case "<":
                 NodeType = ExpressionType.LessThan;
                 break;
+            case "==":
+                NodeType = ExpressionType.Equal;
+                break;
+            case "=":
+                NodeType = ExpressionType.Assign;
+                break;
             default:
                 if (token.Type == TokenType.IDENTIFIER)
                     NodeType = ExpressionType.BinaryOperator;
@@ -39,5 +42,6 @@ public sealed class BinaryExpression : Expression
     public Token OperatorToken { get; }
     public ExpressionType NodeType { get; }
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitBinary(ctx, this);
+    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
+        => visitor.VisitBinary(ctx, this);
 }

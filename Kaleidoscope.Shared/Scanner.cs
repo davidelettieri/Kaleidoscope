@@ -1,7 +1,8 @@
-﻿using System.Globalization;
+﻿using Kaleidoscope.Shared;
+using System.Globalization;
 using static Kaleidoscope.Shared.TokenType;
 
-namespace Kaleidoscope.Shared;
+namespace Kaleidoscope;
 
 public sealed class Scanner(string source)
 {
@@ -21,6 +22,7 @@ public sealed class Scanner(string source)
         { "in", IN },
         { "unary", UNARY },
         { "binary", BINARY },
+        { "var", VAR }
     };
 
     public List<Token> ScanTokens()
@@ -67,6 +69,17 @@ public sealed class Scanner(string source)
                 while (!IsAtEnd() && Peek() != '\n' && Peek() != '\r')
                 {
                     Advance();
+                }
+                break;
+            case '=':
+                if (Peek() == '=')
+                {
+                    Advance();
+                    AddToken(EQUAL_EQUAL);
+                }
+                else
+                {
+                    AddToken(EQUAL);
                 }
                 break;
             default:
@@ -137,7 +150,6 @@ public sealed class Scanner(string source)
     }
 
     private bool IsDigit(char c) => char.IsDigit(c);
-
     void AddToken(TokenType type) => _tokens.Add(new Token(type, _source[_start.._current], _line));
     void AddIdentifierToken(string value) => _tokens.Add(new Token(IDENTIFIER, _source[_start.._current], _line, value));
     void AddNumberToken(double value) => _tokens.Add(new Token(NUMBER, _source[_start.._current], _line, value));

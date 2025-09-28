@@ -42,7 +42,6 @@ class Program
         }
     }
 
-
     static void Run(string source)
     {
         var scanner = new Scanner(source);
