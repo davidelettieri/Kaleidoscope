@@ -1,3 +1,5 @@
+using LLVMSharp.Interop;
+
 namespace Kaleidoscope.Shared.AST;
 
 public sealed class UnaryExpression(Token @operator, Expression operand) : Expression
@@ -6,5 +8,5 @@ public sealed class UnaryExpression(Token @operator, Expression operand) : Expre
     public Expression Operand { get; } = operand;
     public ExpressionType NodeType { get; } = ExpressionType.Unary;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitUnary(ctx, this);
+    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitUnary(ctx, this);
 }

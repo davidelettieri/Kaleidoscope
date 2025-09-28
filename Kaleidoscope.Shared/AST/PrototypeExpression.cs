@@ -1,5 +1,6 @@
 ﻿namespace Kaleidoscope.Shared.AST;
 
+using LLVMSharp.Interop;
 using System.Collections.Generic;
 
 public class PrototypeExpression(string name, List<string> args) : Expression
@@ -8,5 +9,5 @@ public class PrototypeExpression(string name, List<string> args) : Expression
     public List<string> Arguments { get; } = args;
     public virtual ExpressionType NodeType { get; } = ExpressionType.Prototype;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitPrototype(ctx, this);
+    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitPrototype(ctx, this);
 }

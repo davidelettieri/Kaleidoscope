@@ -1,4 +1,6 @@
-﻿namespace Kaleidoscope.Shared.AST;
+﻿using LLVMSharp.Interop;
+
+namespace Kaleidoscope.Shared.AST;
 
 public sealed class BinaryExpression : Expression
 {
@@ -26,6 +28,6 @@ public sealed class BinaryExpression : Expression
     public Token OperatorToken { get; }
     public ExpressionType NodeType { get; }
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx)
+    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx)
         => visitor.VisitBinary(ctx, this);
 }

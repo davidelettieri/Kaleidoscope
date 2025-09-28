@@ -1,16 +1,18 @@
-﻿namespace Kaleidoscope.Shared.AST;
+﻿using LLVMSharp.Interop;
 
-public interface IExpressionVisitor<out TResult, in TContext>
+namespace Kaleidoscope.Shared.AST;
+
+public interface IExpressionVisitor
 {
-    TResult VisitBinary(TContext ctx, BinaryExpression expr);
-    TResult VisitCall(TContext ctx, CallExpression expr);
-    TResult VisitFor(TContext ctx, ForExpression expr);
-    TResult VisitFunction(TContext ctx, FunctionExpression expr);
-    TResult VisitIf(TContext ctx, IfExpression expr);
-    TResult VisitNumber(TContext ctx, NumberExpression expr);
-    TResult VisitPrototype(TContext ctx, PrototypeExpression expr);
-    TResult VisitVariable(TContext ctx, VariableExpression expr);
-    TResult VisitExtern(TContext ctx, ExternExpression expr);
-    TResult VisitUnary(TContext context, UnaryExpression expr);
-    TResult VisitVarInExpression(TContext context, VarInExpression expr);
+    (Context, LLVMValueRef) VisitBinary(Context ctx, BinaryExpression expr);
+    (Context, LLVMValueRef) VisitCall(Context ctx, CallExpression expr);
+    (Context, LLVMValueRef) VisitFor(Context ctx, ForExpression expr);
+    (Context, LLVMValueRef) VisitFunction(Context ctx, FunctionExpression expr);
+    (Context, LLVMValueRef) VisitIf(Context ctx, IfExpression expr);
+    (Context, LLVMValueRef) VisitNumber(Context ctx, NumberExpression expr);
+    (Context, LLVMValueRef) VisitPrototype(Context ctx, PrototypeExpression expr);
+    (Context, LLVMValueRef) VisitVariable(Context ctx, VariableExpression expr);
+    (Context, LLVMValueRef) VisitExtern(Context ctx, ExternExpression expr);
+    (Context, LLVMValueRef) VisitUnary(Context context, UnaryExpression expr);
+    (Context, LLVMValueRef) VisitVarInExpression(Context context, VarInExpression expr);
 }

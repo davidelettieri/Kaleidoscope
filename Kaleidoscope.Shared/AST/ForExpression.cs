@@ -1,4 +1,6 @@
-﻿namespace Kaleidoscope.Shared.AST;
+﻿using LLVMSharp.Interop;
+
+namespace Kaleidoscope.Shared.AST;
 
 public sealed class ForExpression(string varName, Expression start, Expression end, Expression? step, Expression body) : Expression
 {
@@ -14,5 +16,5 @@ public sealed class ForExpression(string varName, Expression start, Expression e
 
     public ExpressionType NodeType { get; } = ExpressionType.For;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitFor(ctx, this);
+    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitFor(ctx, this);
 }

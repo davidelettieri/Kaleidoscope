@@ -1,4 +1,6 @@
-﻿namespace Kaleidoscope.Shared.AST;
+﻿using LLVMSharp.Interop;
+
+namespace Kaleidoscope.Shared.AST;
 
 public sealed class ExternExpression(PrototypeExpression proto) : Expression
 {
@@ -6,5 +8,5 @@ public sealed class ExternExpression(PrototypeExpression proto) : Expression
 
     public ExpressionType NodeType { get; } = ExpressionType.Extern;
 
-    public override TResult Accept<TResult, TContext>(IExpressionVisitor<TResult, TContext> visitor, TContext ctx) => visitor.VisitExtern(ctx, this);
+    public override (Context, LLVMValueRef) Accept(IExpressionVisitor visitor, Context ctx) => visitor.VisitExtern(ctx, this);
 }

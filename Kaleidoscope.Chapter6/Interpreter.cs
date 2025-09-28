@@ -12,7 +12,7 @@ namespace Kaleidoscope;
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 public delegate void Print(double d);
 
-public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Context>
+public unsafe class Interpreter : IExpressionVisitor
 {
     private LLVMModuleRef _module;
     private LLVMBuilderRef _builder;
