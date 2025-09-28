@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Kaleidoscope.Shared.Tests\Kaleidoscope.Shared.Tests.csproj" />
     <ProjectReference Include="..\..\src\Kaleidoscope.Chapter6\Kaleidoscope.Chapter6.csproj" />
   </ItemGroup>
 

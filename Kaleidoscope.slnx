@@ -16,6 +16,7 @@
     <Project Path="src/Kaleidoscope.Shared/Kaleidoscope.Shared.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="Kaleidoscope.Shared.Tests/Kaleidoscope.Shared.Tests.csproj" Id="94d6c54d-622b-4e2c-b2fd-7b3d5c8d2b59" />
     <Project Path="tests/Kaleidoscope.Chapter6.Tests/Kaleidoscope.Chapter6.Tests.csproj" Id="9da23a3c-0eed-48bf-9831-84968bb1e1c0" />
     <Project Path="tests/Kaleidoscope.Chapter7.Tests/Kaleidoscope.Chapter7.Tests.csproj" Id="8f963127-77f9-43fa-8ac5-31c688148fe7" />
   </Folder>

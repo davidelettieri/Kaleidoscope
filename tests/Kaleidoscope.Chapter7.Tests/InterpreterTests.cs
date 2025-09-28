@@ -1,15 +1,10 @@
-﻿using Kaleidoscope.Shared;
-using Kaleidoscope.Shared.AST;
+﻿using Kaleidoscope.Shared.Tests;
 
 namespace Kaleidoscope.Chapter7.Tests;
 
-public class InterpreterTests
+public class InterpreterTests : InterpreterTestBase
 {
     private readonly Interpreter _sut = new();
-    private readonly Parser _parser = new();
-    private readonly StringWriter _stringWriter = new();
-
-    public InterpreterTests() => Console.SetOut(_stringWriter);
 
     [Theory]
     [InlineData("1+5;", "6")]
@@ -36,20 +31,5 @@ public class InterpreterTests
         _sut.Run(ast);
 
         AssertSingleLineOutput(expected);
-    }
-
-    private void AssertSingleLineOutput(string expected)
-         => Assert.Equal($"> {expected}{Environment.NewLine}", _stringWriter.ToString());
-
-    private List<Expression> Parse(string source)
-    {
-        var scanner = new Scanner(source);
-        var tokens = scanner.ScanTokens();
-        var expressions = _parser.Parse(tokens);
-        if (expressions is null)
-        {
-            throw new InvalidOperationException("Parsing failed.");
-        }
-        return expressions;
     }
 }
