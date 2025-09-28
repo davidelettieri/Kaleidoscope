@@ -16,6 +16,8 @@ public class InterpreterTests
     [InlineData("1-5;", "-4")]
     [InlineData("10*2;", "20")]
     [InlineData("10<2;", "0")]
+    [InlineData("2 + 3 * 4;", "14")]
+    [InlineData("2 * (3 + 4);", "14")]
     [InlineData("def unary!(v) if v then 0 else 1;!10;", "0")]
     [InlineData("if 1 then 2 else 3;", "2")]
     [InlineData("if 0 then 2 else 3;", "3")]
