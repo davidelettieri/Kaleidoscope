@@ -18,7 +18,7 @@ public unsafe class Interpreter : IExpressionVisitor
     private LLVMExecutionEngineRef _engine;
     private LLVMOpaquePassBuilderOptions* _passBuilderOptions;
     private readonly Dictionary<string, Expression> _functions;
-    private Context? _context;
+    private Context _context;
 
     private void PutChard(double x)
     {
@@ -37,6 +37,7 @@ public unsafe class Interpreter : IExpressionVisitor
         LLVM.InitializeNativeAsmPrinter();
         LLVM.InitializeNativeAsmParser();
         _functions = new Dictionary<string, Expression>();
+        _context = Context.Empty;
     }
 
     private void InitializeModule()
@@ -65,7 +66,7 @@ public unsafe class Interpreter : IExpressionVisitor
         var toRun = new List<LLVMValueRef>();
         foreach (var item in exprs)
         {
-            _context = new Context();
+            _context = Context.Empty;
             var v = Visit(item);
 
             // Since we could have several expressions to be evaluated, we need to complete the emission of all
@@ -235,6 +236,7 @@ public unsafe class Interpreter : IExpressionVisitor
 
     public LLVMValueRef VisitFunction(FunctionExpression expr)
     {
+        var originalContext = _context;
         if (!string.IsNullOrWhiteSpace(expr.Proto.Name))
             _functions[expr.Proto.Name] = expr;
 
@@ -255,13 +257,17 @@ public unsafe class Interpreter : IExpressionVisitor
 
         var returnVal = Visit(expr.Body);
         _builder.BuildRet(returnVal);
+        _context = originalContext;
         return tf;
     }
 
     public LLVMValueRef VisitExtern(ExternExpression expr)
     {
         _functions[expr.Proto.Name] = expr;
-        return Visit(expr.Proto);
+        var originalContext = _context;
+        var result = Visit(expr.Proto);
+        _context = originalContext;
+        return result;
     }
 
     public LLVMValueRef VisitIf(IfExpression expr)
@@ -344,16 +350,18 @@ public unsafe class Interpreter : IExpressionVisitor
 
     public LLVMValueRef VisitVarInExpression(VarInExpression expr)
     {
+        var originalContext = _context;
+        var v = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
+        _context = _context.Add(expr.Name, v);
+
         if (expr.Value is not null)
         {
             var value = Visit(expr.Value);
-            var v1 = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
-            _context = _context.Add(expr.Name, v1);
-            _builder.BuildStore(value, v1);
-            return Visit(expr.Body);
+            _builder.BuildStore(value, v);
         }
-        var v2 = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
-        _context = _context.Add(expr.Name, v2);
-        return Visit(expr.Body);
+
+        var result = Visit(expr.Body);
+        _context = originalContext;
+        return result;
     }
 }

@@ -6,7 +6,9 @@ public sealed class Context
 {
     private readonly ImmutableDictionary<string, LLVMValueRef> _source;
 
-    public Context() => _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
+    public static Context Empty => new Context();
+
+    private Context() => _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
 
     private Context(ImmutableDictionary<string, LLVMValueRef> source) => _source = source;
 
