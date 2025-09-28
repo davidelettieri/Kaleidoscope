@@ -18,6 +18,7 @@ public enum TokenType
     SEMICOLON,
     UNARY,
     BINARY,
+    // types below are used only in Chapter 7
     VAR,
     EQUAL,
     EQUAL_EQUAL,

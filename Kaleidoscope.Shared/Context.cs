@@ -1,8 +1,7 @@
 using LLVMSharp.Interop;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace Kaleidoscope;
+namespace Kaleidoscope.Shared;
 
 public class Context
 {
@@ -21,6 +20,9 @@ public class Context
     public Context Add(string key, LLVMValueRef value)
         => new Context(_source.SetItem(key, value));
 
+    /// <summary>
+    /// Used only in Chapter 6
+    /// </summary>
     public Context AddArguments(LLVMValueRef function, List<string> arguments)
     {
         if (arguments.Count == 0)
@@ -38,6 +40,7 @@ public class Context
 
         return new Context(s);
     }
+
 
     public LLVMValueRef? Get(string key)
     {

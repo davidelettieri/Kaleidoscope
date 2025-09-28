@@ -1,4 +1,5 @@
-﻿using Kaleidoscope.Shared.AST;
+﻿using Kaleidoscope.Shared;
+using Kaleidoscope.Shared.AST;
 using LLVMSharp.Interop;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
     {
         try
         {
-            Console.Write((char) x);
+            Console.Write((char)x);
         }
         catch
         {
@@ -69,7 +70,7 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
 
             // Since we could have several expressions to be evaluated, we need to complete the emission of all
             // the code before running any of them, we keep track of what we need to run and then execute later in order
-            if (item is FunctionExpression {Proto.Name: "anon_expr"})
+            if (item is FunctionExpression { Proto.Name: "anon_expr" })
             {
                 toRun.Add(v);
             }
@@ -185,7 +186,8 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
     public (Context, LLVMValueRef) VisitFor(Context ctx, ForExpression expr)
     {
         var varName = expr.VarName;
-        var ctx1 = ctx.Add(varName, _builder);
+        var value = _builder.BuildAlloca(LLVMTypeRef.Double, varName);
+        var ctx1 = ctx.Add(varName, value);
         var start = expr.Start;
         var end = expr.End;
         var step = expr.Step;
@@ -244,9 +246,10 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         for (int i = 0; i < expr.Proto.Arguments.Count; i++)
         {
             var n = expr.Proto.Arguments[i];
-            var param = tf.GetParam((uint) i);
+            var param = tf.GetParam((uint)i);
             param.Name = n;
-            ctxn = ctxn.Add(n, _builder);
+            var value = _builder.BuildAlloca(LLVMTypeRef.Double, n);
+            ctxn = ctxn.Add(n, value);
             var nValueRef = ctxn.Get(n);
             if (nValueRef is null)
             {
@@ -288,8 +291,8 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         elseBb = _builder.InsertBlock;
         _builder.PositionAtEnd(mergeBb);
         var phi = _builder.BuildPhi(LLVMTypeRef.Double, "iftmp");
-        phi.AddIncoming(new[] {thenVal}, new[] {thenBb}, 1u);
-        phi.AddIncoming(new[] {elseVal}, new[] {elseBb}, 1u);
+        phi.AddIncoming(new[] { thenVal }, new[] { thenBb }, 1u);
+        phi.AddIncoming(new[] { elseVal }, new[] { elseBb }, 1u);
         _builder.PositionAtEnd(thenBb);
         _builder.BuildBr(mergeBb);
         _builder.PositionAtEnd(elseBb);
@@ -349,7 +352,8 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         if (expr.Value is not null)
         {
             var (ctx1, value) = Visit(ctx, expr.Value);
-            var ctx2 = ctx1.Add(expr.Name, _builder);
+            var v1 = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
+            var ctx2 = ctx1.Add(expr.Name, v1);
             var exprValueRef = ctx2.Get(expr.Name);
             if (exprValueRef is null)
             {
@@ -358,8 +362,8 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
             _builder.BuildStore(value, exprValueRef.Value);
             return Visit(ctx2, expr.Body);
         }
-
-        var ctxn = ctx.Add(expr.Name, _builder);
+        var v2 = _builder.BuildAlloca(LLVMTypeRef.Double, expr.Name);
+        var ctxn = ctx.Add(expr.Name, v2);
         return Visit(ctxn, expr.Body);
     }
 }

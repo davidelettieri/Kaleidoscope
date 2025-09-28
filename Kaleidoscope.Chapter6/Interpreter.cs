@@ -1,4 +1,5 @@
-﻿using Kaleidoscope.Shared.AST;
+﻿using Kaleidoscope.Shared;
+using Kaleidoscope.Shared.AST;
 using LLVMSharp.Interop;
 using System;
 using System.Collections.Generic;
@@ -290,6 +291,9 @@ public unsafe class Interpreter : IExpressionVisitor<(Context, LLVMValueRef), Co
         return Visit(ctx, callExpr);
     }
 
+    /// <summary>
+    /// This will be implemented in chapter 7
+    /// </summary>
     public (Context, LLVMValueRef) VisitVarInExpression(Context context, VarInExpression expr)
         => throw new NotImplementedException();
 }
