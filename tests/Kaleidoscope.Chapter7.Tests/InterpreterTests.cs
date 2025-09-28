@@ -39,7 +39,7 @@ public class InterpreterTests
     }
 
     private void AssertSingleLineOutput(string expected)
-         => Assert.Equal($"> {expected}\r\n", _stringWriter.ToString());
+         => Assert.Equal($"> {expected}{Environment.NewLine}", _stringWriter.ToString());
 
     private List<Expression> Parse(string source)
     {
