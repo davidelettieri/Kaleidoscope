@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 
 namespace Kaleidoscope.Shared;
 
-public class Context
+public sealed class Context
 {
     private readonly ImmutableDictionary<string, LLVMValueRef> _source;
 

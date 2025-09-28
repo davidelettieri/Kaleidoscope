@@ -33,7 +33,7 @@ public sealed class Parser
             return p;
         }
 
-        if (token is {Type: IDENTIFIER, Value: not null} &&
+        if (token is { Type: IDENTIFIER, Value: not null } &&
             _customOperatorsPrecedence.TryGetValue(token.Value.ToString()!, out var cp))
         {
             return cp;
