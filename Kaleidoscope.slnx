@@ -6,11 +6,17 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="Kaleidoscope.Chapter6/Kaleidoscope.Chapter6.csproj">
-    <Platform Solution="*|x86" Project="x86" />
-  </Project>
-  <Project Path="Kaleidoscope.Chapter7/Kaleidoscope.Chapter7.csproj">
-    <Platform Solution="*|x86" Project="x86" />
-  </Project>
-  <Project Path="Kaleidoscope.Shared/Kaleidoscope.Shared.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/Kaleidoscope.Chapter6/Kaleidoscope.Chapter6.csproj">
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="src/Kaleidoscope.Chapter7/Kaleidoscope.Chapter7.csproj">
+      <Platform Solution="*|x86" Project="x86" />
+    </Project>
+    <Project Path="src/Kaleidoscope.Shared/Kaleidoscope.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kaleidoscope.Chapter6.Tests/Kaleidoscope.Chapter6.Tests.csproj" Id="9da23a3c-0eed-48bf-9831-84968bb1e1c0" />
+    <Project Path="tests/Kaleidoscope.Chapter7.Tests/Kaleidoscope.Chapter7.Tests.csproj" Id="8f963127-77f9-43fa-8ac5-31c688148fe7" />
+  </Folder>
 </Solution>
