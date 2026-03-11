@@ -102,27 +102,6 @@ public unsafe class Interpreter : IExpressionVisitor
 
     private LLVMValueRef Visit(Expression body) => body.Accept(this);
 
-    private LLVMValueRef BinaryVal(LLVMValueRef lhsVal, LLVMValueRef rhsVal, ExpressionType nodeType)
-    {
-        switch (nodeType)
-        {
-            case Add:
-                return _builder.BuildFAdd(lhsVal, rhsVal, "addtmp");
-            case Subtract:
-                return _builder.BuildFSub(lhsVal, rhsVal, "addtmp");
-            case Multiply:
-                return _builder.BuildFMul(lhsVal, rhsVal, "addtmp");
-            case LessThan:
-                var i = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhsVal, rhsVal, "cmptmp");
-                return _builder.BuildUIToFP(i, LLVMTypeRef.Double, "booltmp");
-            case Equal:
-                var j = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOEQ, lhsVal, rhsVal, "cmptmp");
-                return _builder.BuildUIToFP(j, LLVMTypeRef.Double, "booltmp");
-            default:
-                throw new InvalidOperationException();
-        }
-    }
-
     public LLVMValueRef VisitBinary(BinaryExpression expr)
     {
         if (expr.NodeType == BinaryOperator)
@@ -152,7 +131,15 @@ public unsafe class Interpreter : IExpressionVisitor
 
         var lhsVal = Visit(expr.Lhs);
         var rhsVal = Visit(expr.Rhs);
-        return BinaryVal(lhsVal, rhsVal, expr.NodeType);
+        return expr.NodeType switch
+        {
+            Add => _builder.BuildFAdd(lhsVal, rhsVal, "addtmp"),
+            Subtract => _builder.BuildFSub(lhsVal, rhsVal, "subtmp"),
+            Multiply => _builder.BuildFMul(lhsVal, rhsVal, "multmp"),
+            LessThan => _builder.BuildUIToFP(_builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhsVal, rhsVal, "cmptmp"), LLVMTypeRef.Double, "booltmp"),
+            Equal => _builder.BuildUIToFP(_builder.BuildFCmp(LLVMRealPredicate.LLVMRealOEQ, lhsVal, rhsVal, "cmptmp"), LLVMTypeRef.Double, "booltmp"),
+            _ => throw new InvalidOperationException()
+        };
     }
 
     public LLVMValueRef VisitCall(CallExpression expr)
