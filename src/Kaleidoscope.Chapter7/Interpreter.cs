@@ -134,8 +134,8 @@ public unsafe class Interpreter : IExpressionVisitor
         return expr.NodeType switch
         {
             Add => _builder.BuildFAdd(lhsVal, rhsVal, "addtmp"),
-            Subtract => _builder.BuildFSub(lhsVal, rhsVal, "addtmp"),
-            Multiply => _builder.BuildFMul(lhsVal, rhsVal, "addtmp"),
+            Subtract => _builder.BuildFSub(lhsVal, rhsVal, "subtmp"),
+            Multiply => _builder.BuildFMul(lhsVal, rhsVal, "multmp"),
             LessThan => _builder.BuildUIToFP(_builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhsVal, rhsVal, "cmptmp"), LLVMTypeRef.Double, "booltmp"),
             Equal => _builder.BuildUIToFP(_builder.BuildFCmp(LLVMRealPredicate.LLVMRealOEQ, lhsVal, rhsVal, "cmptmp"), LLVMTypeRef.Double, "booltmp"),
             _ => throw new InvalidOperationException()
