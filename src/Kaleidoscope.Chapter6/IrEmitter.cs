@@ -32,6 +32,9 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
         return activeModule;
     }
 
+    public LLVMValueRef Emit(Expression expr)
+        => Visit(expr);
+
     private LLVMValueRef Visit(Expression body) => body.Accept(this);
 
     private LLVMValueRef BinaryVal(LLVMValueRef lhsVal, LLVMValueRef rhsVal, ExpressionType nodeType)

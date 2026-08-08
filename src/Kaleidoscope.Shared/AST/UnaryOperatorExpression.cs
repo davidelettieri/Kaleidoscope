@@ -1,6 +1,6 @@
 namespace Kaleidoscope.Shared.AST;
 
-public sealed class UnaryOperatorExpression(string name, List<string> args) : PrototypeExpression("unary_" + name, args)
+public sealed record UnaryOperatorExpression(string Name, List<string> Arguments) : PrototypeExpression("unary_" + Name, Arguments)
 {
     public string Argument => Arguments[0];
     public override ExpressionType NodeType { get; } = ExpressionType.UnaryOperator;
