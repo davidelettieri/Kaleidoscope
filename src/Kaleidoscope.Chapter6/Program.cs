@@ -12,23 +12,24 @@ class Program
     {
         using var jit = new OrcJitEngine();
         using var generator = new IrEmitter(jit.Context);
+        var driver = new KaleidoscopeDriver(generator, jit);
         if (args.Length == 1)
         {
-            RunFile(generator, jit, args[0]);
+            RunFile(driver, args[0]);
         }
         else
         {
-            RunRepl(generator, jit);
+            RunRepl(driver);
         }
     }
 
-    static void RunFile(IrEmitter generator, OrcJitEngine jit, string path)
+    static void RunFile(KaleidoscopeDriver driver, string path)
     {
         var source = File.ReadAllText(path);
-        Run(generator, jit, source);
+        Run(driver, source);
     }
 
-    static void RunRepl(IrEmitter generator, OrcJitEngine jit)
+    static void RunRepl(KaleidoscopeDriver driver)
     {
         while (true)
         {
@@ -40,16 +41,15 @@ class Program
                 return;
             }
 
-            Run(generator, jit, source);
+            Run(driver, source);
         }
     }
 
-    static void Run(IrEmitter generator, OrcJitEngine jit, string source)
+    static void Run(KaleidoscopeDriver driver, string source)
     {
         var scanner = new Scanner(source);
         var tokens = scanner.ScanTokens();
         var ast = Parser.Parse(tokens);
-        var driver = new KaleidoscopeDriver(generator, jit);
         if (ast is not null)
         {
             driver.Run(ast);

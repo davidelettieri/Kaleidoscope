@@ -73,11 +73,23 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     {
         var func = _module.GetNamedFunction(expr.Callee);
 
-        if (!_functions.TryGetValue(expr.Callee, out var functionDef))
-            return null;
+        if (func.Handle == IntPtr.Zero)
+        {
+            if (_functions.TryGetValue(expr.Callee, out var oldExpr))
+            {
+                var pos = _builder.InsertBlock;
+                var f = Visit(oldExpr);
+                func = f;
+                _builder.PositionAtEnd(pos);
+            }
+            else
+            {
+                return null;
+            }
+        }
 
-        var funcParams = functionDef.Arguments;
-        if (expr.Arguments.Count != funcParams.Count)
+        var funcParams = func.GetParams();
+        if (expr.Arguments.Count != funcParams.Length)
             throw new InvalidOperationException("incorrect number of arguments passed");
 
         var argsValues = expr.Arguments.Select(Visit).ToArray();
