@@ -10,8 +10,8 @@ class Program
 
     static void Main(string[] args)
     {
-        using var generator = new IrEmitter();
         using var jit = new OrcJitEngine();
+        using var generator = new IrEmitter(jit.Context);
         if (args.Length == 1)
         {
             RunFile(generator, jit, args[0]);

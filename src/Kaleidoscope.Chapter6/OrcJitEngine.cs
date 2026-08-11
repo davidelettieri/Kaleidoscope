@@ -1,3 +1,4 @@
+using Kaleidoscope.Shared;
 using System;
 using System.Runtime.InteropServices;
 
@@ -9,6 +10,11 @@ public unsafe class OrcJitEngine : IDisposable
 {
     private LLVMOrcOpaqueLLJIT* _jit;
 
+    /// The ThreadSafeContext owned by the JIT engine.
+    private readonly LLVMOrcOpaqueThreadSafeContext* _threadSafeContext;
+
+    /// The underlying LLVMContextRef used by IRGenerator to emit modules.
+    public LLVMContextRef Context { get; }
 
     public OrcJitEngine()
     {
@@ -25,21 +31,23 @@ public unsafe class OrcJitEngine : IDisposable
 
         if (error != null)
         {
-            throw new InvalidOperationException($"Failed to initialize OrcLLJIT");
+            var message = Helpers.ToString(error);
+            throw new InvalidOperationException($"Failed to initialize OrcLLJIT: {message}");
         }
+
+        _threadSafeContext = LLVM.OrcCreateNewThreadSafeContext();
+        Context = LLVM.OrcThreadSafeContextGetContext(_threadSafeContext);
     }
 
     public void AddModule(LLVMModuleRef module)
     {
-        // Wrap module and context in thread-safe containers required by LLVM ORC
-        var tsCtx = LLVM.OrcCreateNewThreadSafeContext();
-        var tsMod = LLVM.OrcCreateNewThreadSafeModule(module, tsCtx);
+        var tsMod = LLVM.OrcCreateNewThreadSafeModule(module, _threadSafeContext);
 
         var mainDlib = LLVM.OrcLLJITGetMainJITDylib(_jit);
         var error = LLVM.OrcLLJITAddLLVMIRModule(_jit, mainDlib, tsMod);
         if (error != null)
         {
-            throw new InvalidOperationException($"Failed to add module to JIT");
+            throw new InvalidOperationException($"Failed to add module to JIT: {Helpers.ToString(error)}");
         }
     }
 
@@ -68,8 +76,18 @@ public unsafe class OrcJitEngine : IDisposable
     {
         if (_jit != null)
         {
-            LLVM.OrcDisposeLLJIT(_jit);
+            var error = LLVM.OrcDisposeLLJIT(_jit);
+            if (error != null)
+            {
+                var ptr = LLVM.GetErrorMessage(error);
+                LLVM.DisposeErrorMessage(ptr);
+            }
             _jit = null;
+        }
+        
+        if (_threadSafeContext != null)
+        {
+            LLVM.OrcDisposeThreadSafeContext(_threadSafeContext);
         }
     }
 }

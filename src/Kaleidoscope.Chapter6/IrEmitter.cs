@@ -12,15 +12,15 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     private readonly LLVMContextRef _context;
     private LLVMModuleRef _module;
     private readonly LLVMBuilderRef _builder;
-    private readonly Dictionary<string, Expression> _functions;
+    private readonly Dictionary<string, PrototypeExpression> _functions;
     private NamedValues _namedValues;
 
-    public IrEmitter(string moduleName = "KaleidoscopeModule")
+    public IrEmitter(LLVMContextRef context, string moduleName = "KaleidoscopeModule")
     {
-        _context = LLVMContextRef.Create();
+        _context = context;
         _module = _context.CreateModuleWithName(moduleName);
         _builder = _context.CreateBuilder();
-        _functions = new Dictionary<string, Expression>();
+        _functions = new Dictionary<string, PrototypeExpression>();
         _namedValues = NamedValues.Empty;
     }
 
@@ -73,23 +73,11 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     {
         var func = _module.GetNamedFunction(expr.Callee);
 
-        if (func.Handle == IntPtr.Zero)
-        {
-            if (_functions.TryGetValue(expr.Callee, out var oldExpr))
-            {
-                var pos = _builder.InsertBlock;
-                var f = Visit(oldExpr);
-                func = f;
-                _builder.PositionAtEnd(pos);
-            }
-            else
-            {
-                return null;
-            }
-        }
+        if (!_functions.TryGetValue(expr.Callee, out var functionDef))
+            return null;
 
-        var funcParams = func.GetParams();
-        if (expr.Arguments.Count != funcParams.Length)
+        var funcParams = functionDef.Arguments;
+        if (expr.Arguments.Count != funcParams.Count)
             throw new InvalidOperationException("incorrect number of arguments passed");
 
         var argsValues = expr.Arguments.Select(Visit).ToArray();
@@ -134,7 +122,7 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     {
         var originalNamedValues = _namedValues;
         if (!string.IsNullOrWhiteSpace(expr.Proto.Name))
-            _functions[expr.Proto.Name] = expr;
+            _functions[expr.Proto.Name] = expr.Proto;
 
         var tf = Visit(expr.Proto);
         var bb = tf.AppendBasicBlock("entry");
@@ -147,7 +135,7 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
 
     public LLVMValueRef VisitExtern(ExternExpression expr)
     {
-        _functions[expr.Proto.Name] = expr;
+        _functions[expr.Proto.Name] = expr.Proto;
         var originalNamedValues = _namedValues;
         var result = Visit(expr.Proto);
         _namedValues = originalNamedValues;
