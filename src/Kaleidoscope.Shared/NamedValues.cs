@@ -2,23 +2,23 @@ using System.Collections.Immutable;
 
 namespace Kaleidoscope.Shared;
 
-public sealed class Context
+public sealed class NamedValues
 {
     private readonly ImmutableDictionary<string, LLVMValueRef> _source;
 
-    public static Context Empty => new Context();
+    public static NamedValues Empty => new NamedValues();
 
-    private Context() => _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
+    private NamedValues() => _source = ImmutableDictionary<string, LLVMValueRef>.Empty;
 
-    private Context(ImmutableDictionary<string, LLVMValueRef> source) => _source = source;
+    private NamedValues(ImmutableDictionary<string, LLVMValueRef> source) => _source = source;
 
-    public Context Add(string key, LLVMValueRef value)
-        => new Context(_source.SetItem(key, value));
+    public NamedValues Add(string key, LLVMValueRef value)
+        => new NamedValues(_source.SetItem(key, value));
 
     /// <summary>
     /// Used only in Chapter 6
     /// </summary>
-    public Context AddArguments(LLVMValueRef function, List<string> arguments)
+    public NamedValues AddArguments(LLVMValueRef function, List<string> arguments)
     {
         if (arguments.Count == 0)
             return this;
@@ -33,7 +33,7 @@ public sealed class Context
             s = s.SetItem(name, param);
         }
 
-        return new Context(s);
+        return new NamedValues(s);
     }
 
     public LLVMValueRef? Get(string key)
