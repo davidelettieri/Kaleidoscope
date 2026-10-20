@@ -14,9 +14,11 @@ public unsafe class OrcJitEngine : IDisposable
     private LLVMOrcOpaqueLLJIT* _jit;
 
     /// The ThreadSafeContext owned by the JIT engine.
-    private readonly LLVMOrcOpaqueThreadSafeContext* _threadSafeContext;
+    private LLVMOrcOpaqueThreadSafeContext* _threadSafeContext;
 
     private readonly LLVMOrcOpaqueJITDylib* _mainJd;
+
+    private Print? _putCharDelegate;
 
     /// The underlying LLVMContextRef used by IRGenerator to emit modules.
     public LLVMContextRef Context { get; }
@@ -51,6 +53,7 @@ public unsafe class OrcJitEngine : IDisposable
     {
         // Map the putchard function to the C# delegate
         Delegate d = new Print(PutChard);
+        _putCharDelegate = PutChard;
         var p = Marshal.GetFunctionPointerForDelegate(d);
 
         LLVMOrcOpaqueSymbolStringPoolEntry* entry;
@@ -78,8 +81,8 @@ public unsafe class OrcJitEngine : IDisposable
 
     public void AddModule(LLVMModuleRef module)
     {
-        sbyte** errorMessage = null;
-        LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, errorMessage);
+        sbyte* errorMessage = null;
+        LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, &errorMessage);
         if (errorMessage != null)
         {
             var message = MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)errorMessage).AsString();
@@ -92,7 +95,6 @@ public unsafe class OrcJitEngine : IDisposable
         if (error != null)
         {
             LLVM.OrcDisposeThreadSafeModule(tsMod);
-            LLVM.OrcDisposeThreadSafeContext(_threadSafeContext);
             throw new InvalidOperationException($"Failed to add module to JIT: {Helpers.ToString(error)}");
         }
     }
@@ -129,6 +131,7 @@ public unsafe class OrcJitEngine : IDisposable
         if (_threadSafeContext != null)
         {
             LLVM.OrcDisposeThreadSafeContext(_threadSafeContext);
+            _threadSafeContext = null;
         }
     }
 
