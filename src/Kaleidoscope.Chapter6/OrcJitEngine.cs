@@ -78,6 +78,14 @@ public unsafe class OrcJitEngine : IDisposable
 
     public void AddModule(LLVMModuleRef module)
     {
+        sbyte** errorMessage = null;
+        LLVM.VerifyModule(module, LLVMVerifierFailureAction.LLVMPrintMessageAction, errorMessage);
+        if (errorMessage != null)
+        {
+            var message = MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)errorMessage).AsString();
+            throw new InvalidOperationException($"Invalid LLVM IR Generated: {message}");
+        }
+
         var tsMod = LLVM.OrcCreateNewThreadSafeModule(module, _threadSafeContext);
 
         var error = LLVM.OrcLLJITAddLLVMIRModule(_jit, _mainJd, tsMod);

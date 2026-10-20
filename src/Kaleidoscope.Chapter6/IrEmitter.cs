@@ -14,7 +14,8 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     private readonly LLVMBuilderRef _builder;
     private readonly Dictionary<string, PrototypeExpression> _functions;
     private NamedValues _namedValues;
-
+    private LLVMTypeRef DoubleType => _context.DoubleType;
+    
     public IrEmitter(LLVMContextRef context, string moduleName = "KaleidoscopeModule")
     {
         _context = context;
@@ -22,6 +23,9 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
         _builder = _context.CreateBuilder();
         _functions = new Dictionary<string, PrototypeExpression>();
         _namedValues = NamedValues.Empty;
+        
+        _functions["putchard"] = new PrototypeExpression("putchard", ["ch"]);
+        _functions["printd"]   = new PrototypeExpression("printd", ["val"]);
     }
 
     public LLVMModuleRef ExtractModuleAndReset(string newModuleName)
@@ -44,12 +48,12 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
             case Add:
                 return _builder.BuildFAdd(lhsVal, rhsVal, "addtmp");
             case Subtract:
-                return _builder.BuildFSub(lhsVal, rhsVal, "addtmp");
+                return _builder.BuildFSub(lhsVal, rhsVal, "subtmp");
             case Multiply:
-                return _builder.BuildFMul(lhsVal, rhsVal, "addtmp");
+                return _builder.BuildFMul(lhsVal, rhsVal, "multml");
             case LessThan:
                 var i = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealOLT, lhsVal, rhsVal, "cmptmp");
-                return _builder.BuildUIToFP(i, LLVMTypeRef.Double, "booltmp");
+                return _builder.BuildUIToFP(i, DoubleType, "booltmp");
             default:
                 throw new InvalidOperationException();
         }
@@ -93,8 +97,8 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
             throw new InvalidOperationException("incorrect number of arguments passed");
 
         var argsValues = expr.Arguments.Select(Visit).ToArray();
-        var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Double,
-            Enumerable.Repeat(LLVMTypeRef.Double, expr.Arguments.Count).ToArray());
+        var funcType = LLVMTypeRef.CreateFunction(DoubleType,
+            Enumerable.Repeat(DoubleType, expr.Arguments.Count).ToArray());
         return _builder.BuildCall2(funcType, func, argsValues, "calltmp");
     }
 
@@ -111,15 +115,15 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
         var loopBb = theFunction.AppendBasicBlock("loop");
         _builder.BuildBr(loopBb);
         _builder.PositionAtEnd(loopBb);
-        var variable = _builder.BuildPhi(LLVMTypeRef.Double, varName);
+        var variable = _builder.BuildPhi(DoubleType, varName);
         variable.AddIncoming(new[] { startVal }, new[] { preHeaderBb }, 1u);
         var originalNamedValues = _namedValues;
         _namedValues = _namedValues.Add(varName, variable);
         Visit(body);
-        LLVMValueRef stepVal = step is not null ? Visit(step) : LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 1);
+        LLVMValueRef stepVal = step is not null ? Visit(step) : LLVMValueRef.CreateConstReal(DoubleType, 1);
         var nextVar = _builder.BuildFAdd(variable, stepVal, "nextvar");
         var endCond = Visit(end);
-        var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
+        var zero = LLVMValueRef.CreateConstReal(DoubleType, 0);
         var endCond2 = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, endCond, zero, "loopcond");
         var loopEndBb = _builder.InsertBlock;
         var afterBb = theFunction.AppendBasicBlock("afterloop");
@@ -156,45 +160,49 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
 
     public LLVMValueRef VisitIf(IfExpression expr)
     {
-        var exprCondition = expr.Condition;
-        var exprThen = expr.Then;
-        var exprElse = expr.Else;
-        var cond = Visit(exprCondition);
-        var zero = LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, 0);
+        var cond = Visit(expr.Condition);
+        var zero = LLVMValueRef.CreateConstReal(DoubleType, 0);
         var condVal = _builder.BuildFCmp(LLVMRealPredicate.LLVMRealONE, cond, zero, "ifcond");
+
         var startBb = _builder.InsertBlock;
         var theFunction = startBb.Parent;
+
         var thenBb = theFunction.AppendBasicBlock("then");
         var elseBb = theFunction.AppendBasicBlock("else");
         var mergeBb = theFunction.AppendBasicBlock("ifcont");
+
         _builder.BuildCondBr(condVal, thenBb, elseBb);
+
+        // --- THEN BRANCH ---
         _builder.PositionAtEnd(thenBb);
-        var thenVal = Visit(exprThen);
-        thenBb = _builder.InsertBlock;
+        var thenVal = Visit(expr.Then);
+        _builder.BuildBr(mergeBb); // Branch to merge immediately
+        thenBb = _builder.InsertBlock; // Capture the actual ending block of 'then'
+
+        // --- ELSE BRANCH ---
         _builder.PositionAtEnd(elseBb);
-        var elseVal = Visit(exprElse);
-        elseBb = _builder.InsertBlock;
+        var elseVal = Visit(expr.Else);
+        _builder.BuildBr(mergeBb); // Branch to merge immediately
+        elseBb = _builder.InsertBlock; // Capture the actual ending block of 'else'
+
+        // --- PHI NODE IN MERGE BLOCK ---
         _builder.PositionAtEnd(mergeBb);
-        var phi = _builder.BuildPhi(LLVMTypeRef.Double, "iftmp");
+        var phi = _builder.BuildPhi(DoubleType, "iftmp");
         phi.AddIncoming(new[] { thenVal }, new[] { thenBb }, 1u);
         phi.AddIncoming(new[] { elseVal }, new[] { elseBb }, 1u);
-        _builder.PositionAtEnd(thenBb);
-        _builder.BuildBr(mergeBb);
-        _builder.PositionAtEnd(elseBb);
-        _builder.BuildBr(mergeBb);
-        _builder.PositionAtEnd(mergeBb);
+
         return phi;
     }
 
     public LLVMValueRef VisitNumber(NumberExpression expr) =>
-        LLVMValueRef.CreateConstReal(LLVMTypeRef.Double, expr.Value);
+        LLVMValueRef.CreateConstReal(DoubleType, expr.Value);
 
     public LLVMValueRef VisitPrototype(PrototypeExpression expr)
     {
         var name = expr.Name;
         var args = expr.Arguments;
         var doubles = new LLVMTypeRef[args.Count];
-        Array.Fill(doubles, LLVMTypeRef.Double);
+        Array.Fill(doubles, DoubleType);
         var f = _module.GetNamedFunction(name);
 
         if (name != "anon_expr" && f.Handle != IntPtr.Zero)
@@ -207,7 +215,7 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
         }
         else
         {
-            var retType = LLVMTypeRef.Double;
+            var retType = DoubleType;
             var ft = LLVMTypeRef.CreateFunction(retType, doubles);
             f = _module.AddFunction(name, ft);
             f.Linkage = LLVMLinkage.LLVMExternalLinkage;
@@ -242,7 +250,6 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
 
     public void Dispose()
     {
-        _context.Dispose();
         _module.Dispose();
         _builder.Dispose();
     }
