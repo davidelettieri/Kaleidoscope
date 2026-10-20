@@ -1,8 +1,6 @@
 namespace Kaleidoscope.Shared.AST;
 
-public sealed class VariableExpression(string name) : Expression
+public sealed record VariableExpression(string Name) : Expression
 {
-    public string Name { get; } = name;
-
     public override LLVMValueRef Accept(IExpressionVisitor visitor) => visitor.VisitVariable(this);
 }

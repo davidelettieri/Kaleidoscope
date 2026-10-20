@@ -1,6 +1,6 @@
 ﻿namespace Kaleidoscope.Shared.AST;
 
-public abstract class Expression
+public abstract record Expression
 {
     public abstract LLVMValueRef Accept(IExpressionVisitor visitor);
 }
