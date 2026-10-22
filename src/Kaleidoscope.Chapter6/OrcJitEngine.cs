@@ -30,41 +30,47 @@ public unsafe class OrcJitEngine : IDisposable
         LLVM.InitializeNativeAsmPrinter();
         LLVM.InitializeNativeAsmParser();
 
-        // The default small code model emits COFF ADDR32NB relocations that LLJIT
-        // cannot apply. The large code model uses 64-bit references instead.
-        var triplePtr = LLVM.GetDefaultTargetTriple();
-        var cpu = LLVM.GetHostCPUName();
-        var features = LLVM.GetHostCPUFeatures();
         try
         {
-            var jitTargetMachine = CreateTargetMachine(triplePtr, cpu, features);
-            var builder = LLVM.OrcCreateLLJITBuilder();
-            var jitTargetMachineBuilder = LLVM.OrcJITTargetMachineBuilderCreateFromTargetMachine(jitTargetMachine);
-            LLVM.OrcLLJITBuilderSetJITTargetMachineBuilder(builder, jitTargetMachineBuilder);
+            var triplePtr = LLVM.GetDefaultTargetTriple();
+            var cpu = LLVM.GetHostCPUName();
+            var features = LLVM.GetHostCPUFeatures();
+            try
+            {
+                var jitTargetMachine = CreateTargetMachine(triplePtr, cpu, features);
+                var builder = LLVM.OrcCreateLLJITBuilder();
+                var jitTargetMachineBuilder = LLVM.OrcJITTargetMachineBuilderCreateFromTargetMachine(jitTargetMachine);
+                LLVM.OrcLLJITBuilderSetJITTargetMachineBuilder(builder, jitTargetMachineBuilder);
 
-            LLVMOrcOpaqueLLJIT* jit;
-            var error = LLVM.OrcCreateLLJIT(&jit, builder);
-            _jit = jit;
-            if (error != null)
-                throw new InvalidOperationException($"Failed to initialize OrcLLJIT: {Helpers.ToString(error)}");
+                LLVMOrcOpaqueLLJIT* jit;
+                var error = LLVM.OrcCreateLLJIT(&jit, builder);
+                _jit = jit;
+                if (error != null)
+                    throw new InvalidOperationException($"Failed to initialize OrcLLJIT: {Helpers.ToString(error)}");
 
-            _targetMachine = CreateTargetMachine(triplePtr, cpu, features);
+                _targetMachine = CreateTargetMachine(triplePtr, cpu, features);
+            }
+            finally
+            {
+                LLVM.DisposeMessage(triplePtr);
+                LLVM.DisposeMessage(cpu);
+                LLVM.DisposeMessage(features);
+            }
+
+            _mainJd = LLVM.OrcLLJITGetMainJITDylib(_jit);
+            _threadSafeContext = LLVM.OrcCreateNewThreadSafeContext();
+            Context = LLVM.OrcThreadSafeContextGetContext(_threadSafeContext);
+            _triple = FromCString(LLVM.OrcLLJITGetTripleString(_jit));
+            _dataLayout = FromCString(LLVM.OrcLLJITGetDataLayoutStr(_jit));
+            _passBuilderOptions = LLVM.CreatePassBuilderOptions();
+
+            DefineBuiltin(Builtins.PutChar, new NativeUnary(PutChard));
         }
-        finally
+        catch
         {
-            LLVM.DisposeMessage(triplePtr);
-            LLVM.DisposeMessage(cpu);
-            LLVM.DisposeMessage(features);
+            Dispose();
+            throw;
         }
-
-        _mainJd = LLVM.OrcLLJITGetMainJITDylib(_jit);
-        _threadSafeContext = LLVM.OrcCreateNewThreadSafeContext();
-        Context = LLVM.OrcThreadSafeContextGetContext(_threadSafeContext);
-        _triple = FromCString(LLVM.OrcLLJITGetTripleString(_jit));
-        _dataLayout = FromCString(LLVM.OrcLLJITGetDataLayoutStr(_jit));
-        _passBuilderOptions = LLVM.CreatePassBuilderOptions();
-
-        DefineBuiltin(Builtins.PutChar, new NativeUnary(PutChard));
     }
 
     public void AddModule(LLVMModuleRef module)
@@ -153,25 +159,32 @@ public unsafe class OrcJitEngine : IDisposable
         using (var marshaled = new MarshaledString(name))
             entry = LLVM.OrcLLJITMangleAndIntern(_jit, marshaled);
 
-        var pair = new LLVMOrcCSymbolMapPair
+        try
         {
-            Name = entry,
-            Sym = new LLVMJITEvaluatedSymbol
+            var pair = new LLVMOrcCSymbolMapPair
             {
-                Address = (ulong)pointer,
-                Flags = new LLVMJITSymbolFlags
+                Name = entry,
+                Sym = new LLVMJITEvaluatedSymbol
                 {
-                    GenericFlags = (byte)(LLVMJITSymbolGenericFlags.LLVMJITSymbolGenericFlagsExported |
-                                          LLVMJITSymbolGenericFlags.LLVMJITSymbolGenericFlagsCallable),
-                    TargetFlags = 0
+                    Address = (ulong)pointer,
+                    Flags = new LLVMJITSymbolFlags
+                    {
+                        GenericFlags = (byte)(LLVMJITSymbolGenericFlags.LLVMJITSymbolGenericFlagsExported |
+                                              LLVMJITSymbolGenericFlags.LLVMJITSymbolGenericFlagsCallable),
+                        TargetFlags = 0
+                    }
                 }
-            }
-        };
+            };
 
-        var unit = LLVM.OrcAbsoluteSymbols(&pair, 1);
-        var error = LLVM.OrcJITDylibDefine(_mainJd, unit);
-        if (error != null)
-            throw new InvalidOperationException($"Failed to define '{name}' in the JIT: {Helpers.ToString(error)}");
+            var unit = LLVM.OrcAbsoluteSymbols(&pair, 1);
+            var error = LLVM.OrcJITDylibDefine(_mainJd, unit);
+            if (error != null)
+                throw new InvalidOperationException($"Failed to define '{name}' in the JIT: {Helpers.ToString(error)}");
+        }
+        finally
+        {
+            LLVM.OrcReleaseSymbolStringPoolEntry(entry);
+        }
     }
 
     private static LLVMOpaqueTargetMachine* CreateTargetMachine(sbyte* triple, sbyte* cpu, sbyte* features)
@@ -206,12 +219,6 @@ public unsafe class OrcJitEngine : IDisposable
     private double PutChard(double value)
     {
         Console.Write((char)value);
-        return 0;
-    }
-
-    private double Printd(double value)
-    {
-        Console.WriteLine(value);
         return 0;
     }
 }
