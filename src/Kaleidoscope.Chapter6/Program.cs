@@ -30,7 +30,7 @@ class Program
             var source = File.ReadAllText(path);
             Run(driver, source, interactive: false);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
             Environment.ExitCode = 1;

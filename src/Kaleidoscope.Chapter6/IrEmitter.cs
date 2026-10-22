@@ -10,8 +10,9 @@ namespace Kaleidoscope;
 public sealed class IrEmitter : IExpressionVisitor, IDisposable
 {
     private readonly record struct FunctionSymbol(PrototypeExpression Prototype, bool HasBody);
-
+    
     private readonly LLVMContextRef _context;
+    private string _moduleName;
     private LLVMModuleRef _module;
     private readonly LLVMBuilderRef _builder;
     private readonly Dictionary<string, FunctionSymbol> _symbols = new();
@@ -23,6 +24,7 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     public IrEmitter(LLVMContextRef context, string moduleName = "KaleidoscopeModule")
     {
         _context = context;
+        _moduleName = moduleName;
         _module = _context.CreateModuleWithName(moduleName);
         _builder = _context.CreateBuilder();
 
@@ -52,6 +54,7 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     internal LLVMModuleRef ExtractModuleAndReset(string newModuleName)
     {
         var activeModule = _module;
+        _moduleName = newModuleName;
         _module = _context.CreateModuleWithName(newModuleName);
         _namedValues = NamedValues.Empty;
         _builder.ClearInsertionPosition();
@@ -321,7 +324,7 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
     {
         _builder.ClearInsertionPosition();
         _module.Dispose();
-        _module = _context.CreateModuleWithName("KaleidoscopeModule");
+        _module = _context.CreateModuleWithName(_moduleName);
         _namedValues = NamedValues.Empty;
     }
 
