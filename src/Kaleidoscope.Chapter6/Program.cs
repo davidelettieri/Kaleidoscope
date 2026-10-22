@@ -25,8 +25,16 @@ class Program
 
     static void RunFile(KaleidoscopeDriver driver, string path)
     {
-        var source = File.ReadAllText(path);
-        Run(driver, source);
+        try
+        {
+            var source = File.ReadAllText(path);
+            Run(driver, source, interactive: false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            Environment.ExitCode = 1;
+        }
     }
 
     static void RunRepl(KaleidoscopeDriver driver)
@@ -41,18 +49,31 @@ class Program
                 return;
             }
 
-            Run(driver, source);
+            Run(driver, source, interactive: true);
         }
     }
 
-    static void Run(KaleidoscopeDriver driver, string source)
+    static void Run(KaleidoscopeDriver driver, string source, bool interactive)
     {
-        var scanner = new Scanner(source);
-        var tokens = scanner.ScanTokens();
-        var ast = Parser.Parse(tokens);
-        if (ast is not null)
+        try
         {
+            var scanner = new Scanner(source);
+            var tokens = scanner.ScanTokens();
+            var ast = Parser.Parse(tokens);
+            if (ast is null)
+            {
+                if (!interactive)
+                    Environment.ExitCode = 1;
+                return;
+            }
+
             driver.Run(ast);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            if (!interactive)
+                Environment.ExitCode = 1;
         }
     }
 }
