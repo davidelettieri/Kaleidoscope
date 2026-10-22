@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Kaleidoscope.Chapter6": {
+      "commandName": "Project",
+      "commandLineArgs": "mandelbrot"
+    }
+  }
+}
