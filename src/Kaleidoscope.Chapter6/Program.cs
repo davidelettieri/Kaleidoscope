@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Kaleidoscope;
 
-class Program
+static class Program
 {
     private static readonly Parser Parser = new();
 

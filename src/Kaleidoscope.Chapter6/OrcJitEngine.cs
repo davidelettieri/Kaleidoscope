@@ -75,6 +75,11 @@ public unsafe class OrcJitEngine : IDisposable
 
     public void AddModule(LLVMModuleRef module)
     {
+        if (_jit == null)
+        {
+            throw new ObjectDisposedException(nameof(OrcJitEngine));
+        }
+
         try
         {
             module.Target = _triple;
@@ -183,7 +188,10 @@ public unsafe class OrcJitEngine : IDisposable
         }
         finally
         {
-            LLVM.OrcReleaseSymbolStringPoolEntry(entry);
+            if (entry != null)
+            {
+                LLVM.OrcReleaseSymbolStringPoolEntry(entry);
+            }
         }
     }
 
@@ -200,7 +208,7 @@ public unsafe class OrcJitEngine : IDisposable
             throw new InvalidOperationException($"Failed to resolve the host target: {message}");
         }
 
-        return LLVM.CreateTargetMachine(
+        var targetMachine = LLVM.CreateTargetMachine(
             target,
             triple,
             cpu,
@@ -208,6 +216,11 @@ public unsafe class OrcJitEngine : IDisposable
             LLVMCodeGenOptLevel.LLVMCodeGenLevelDefault,
             LLVMRelocMode.LLVMRelocDefault,
             LLVMCodeModel.LLVMCodeModelLarge);
+
+        if (targetMachine == null)
+            throw new InvalidOperationException("Failed to create the target machine");
+
+        return targetMachine;
     }
 
     private static string FromCString(sbyte* value)

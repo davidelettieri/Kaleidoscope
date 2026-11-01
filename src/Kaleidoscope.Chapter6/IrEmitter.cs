@@ -29,11 +29,13 @@ public sealed class IrEmitter : IExpressionVisitor, IDisposable
         _builder = _context.CreateBuilder();
 
         foreach (var prototype in Builtins.Prototypes)
+        {
             _symbols[prototype.Name] = new FunctionSymbol(prototype, HasBody: true);
+        }
     }
 
     internal void BeginBatch()
-        => _batchSnapshot = new Dictionary<string, FunctionSymbol>(_symbols);
+        => _batchSnapshot = new(_symbols);
 
     internal void CommitBatch()
         => _batchSnapshot = null;
